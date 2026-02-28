@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Политика конфиденциальности — Kakai</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #0FA968;
+    --green-dark: #0A7A4C;
+    --green-light: #E6F9F1;
+    --yellow: #FFD23F;
+    --dark: #0D1B12;
+    --gray: #6B7B6E;
+    --bg: #F4FBF7;
+    --white: #ffffff;
+    --border: #C8E8D5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Golos Text', sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    line-height: 1.7;
+  }
+
+  header {
+    background: var(--dark);
+    padding: 24px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--green);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--green);
+  }
+  .logo span { color: var(--yellow); }
+
+  .lang-switch {
+    display: flex;
+    gap: 8px;
+  }
+
+  .lang-btn {
+    background: transparent;
+    border: 1px solid #2A4A35;
+    color: #8BA897;
+    font-family: 'Golos Text', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .lang-btn.active, .lang-btn:hover {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+
+  main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .hero {
+    background: var(--dark);
+    border-radius: 24px;
+    padding: 40px 48px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(15,169,104,0.25) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .hero p {
+    color: #8BA897;
+    font-size: 14px;
+  }
+
+  .updated {
+    display: inline-block;
+    margin-top: 16px;
+    background: rgba(15,169,104,0.15);
+    border: 1px solid rgba(15,169,104,0.3);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+
+  .section {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--green);
+    color: white;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+
+  .section h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+
+  .section p {
+    color: #3D5045;
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+
+  .section p:last-child { margin-bottom: 0; }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+
+  .data-table th {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .data-table td {
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #3D5045;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .highlight {
+    background: var(--green-light);
+    border-left: 4px solid var(--green);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--green-dark);
+  }
+
+  .contact-box {
+    background: var(--dark);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 16px;
+  }
+
+  .contact-box a {
+    color: var(--green);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .contact-box p {
+    color: #8BA897 !important;
+    font-size: 14px !important;
+  }
+
+  footer {
+    text-align: center;
+    padding: 32px;
+    color: var(--gray);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  footer strong { color: var(--green); }
+
+  /* LANGUAGE CONTENT */
+  .lang-kz { display: none; }
+  .lang-ru { display: block; }
+
+  body.kz .lang-ru { display: none; }
+  body.kz .lang-kz { display: block; }
+</style>
+</head>
+<body id="body">
+
+<header>
+  <div class="logo">Kakai<span>.</span>kz</div>
+  <div class="lang-switch">
+    <button class="lang-btn active" onclick="setLang('ru')" id="btn-ru">RU</button>
+    <button class="lang-btn" onclick="setLang('kz')" id="btn-kz">KZ</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- RUSSIAN -->
+  <div class="lang-ru">
+
+    <div class="hero">
+      <div class="hero-label">Юридический документ</div>
+      <h1>Политика конфиденциальности</h1>
+      <p>Kakai — приложение для управления заданиями и экранным временем детей</p>
+      <span class="updated">Обновлено: 1 февраля 2025</span>
+    </div>
+
+    <div class="section">
+      <div class="section-num">1</div>
+      <h2>Общие положения</h2>
+      <p>Настоящая Политика конфиденциальности описывает, как приложения Kakai (приложение для родителей «Kakai — Родительский контроль» и приложение для детей «Kakai — Задания для детей») собирают, используют и защищают персональные данные пользователей.</p>
+      <p>Используя приложения Kakai, вы соглашаетесь с условиями данной политики. Если вы не согласны — пожалуйста, прекратите использование приложений.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">2</div>
+      <h2>Кто мы</h2>
+      <p>Оператором персональных данных является индивидуальный предприниматель, разработчик приложения Kakai, зарегистрированный в Республике Казахстан.</p>
+      <div class="contact-box">
+        <p>📧 По всем вопросам конфиденциальности: <a href="mailto:privacy@kakai.kz">privacy@kakai.kz</a></p>
+        <p>🌐 Сайт: <a href="https://kakai.kz">kakai.kz</a></p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">3</div>
+      <h2>Какие данные мы собираем</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Тип данных</th>
+            <th>Приложение</th>
+            <th>Цель</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Email адрес</td><td>Родитель</td><td>Регистрация и вход в аккаунт</td></tr>
+          <tr><td>Имя пользователя</td><td>Оба</td><td>Отображение в интерфейсе</td></tr>
+          <tr><td>Инвайт-код семьи</td><td>Ребёнок</td><td>Подключение к семейному аккаунту</td></tr>
+          <tr><td>Данные о заданиях</td><td>Оба</td><td>Основной функционал приложения</td></tr>
+          <tr><td>Баланс экранного времени</td><td>Оба</td><td>Учёт заработанного времени</td></tr>
+          <tr><td>Фото выполненных заданий</td><td>Ребёнок</td><td>Подтверждение выполнения заданий</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight">
+        ⚠️ Мы НЕ собираем геолокацию, контакты, SMS, историю браузера или данные других приложений в текущей версии MVP.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">4</div>
+      <h2>Данные детей</h2>
+      <p>Приложение «Kakai — Задания для детей» предназначено для детей в возрасте от 6 лет. Мы серьёзно относимся к защите данных несовершеннолетних.</p>
+      <p><strong>Ребёнок подключается к семейному аккаунту только через инвайт-код родителя.</strong> Самостоятельная регистрация детей без ведома родителя невозможна.</p>
+      <p>Данные ребёнка (имя, задания, баланс времени) видны только родителю данной семьи. Доступ третьих лиц исключён на уровне базы данных (Row Level Security).</p>
+      <p>Фотографии выполненных заданий хранятся в защищённом облачном хранилище Supabase Storage и доступны только родителю данного ребёнка.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">5</div>
+      <h2>Как мы используем данные</h2>
+      <p>Собранные данные используются исключительно для:</p>
+      <p>— Обеспечения основного функционала приложения (задания, экранное время)<br>
+      — Идентификации пользователей в семейном аккаунте<br>
+      — Отправки push-уведомлений о выполненных заданиях<br>
+      — Улучшения качества приложения</p>
+      <div class="highlight">
+        🚫 Мы никогда не продаём, не передаём и не монетизируем ваши персональные данные третьим лицам.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">6</div>
+      <h2>Хранение и безопасность данных</h2>
+      <p>Все данные хранятся на серверах Supabase (supabase.com) с шифрованием при передаче (HTTPS/TLS) и в состоянии покоя.</p>
+      <p>Доступ к данным защищён системой Row Level Security — каждый пользователь видит только свои данные. Родитель видит данные только своей семьи.</p>
+      <p>Данные хранятся на серверах в регионе EU West (Ирландия).</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">7</div>
+      <h2>Ваши права</h2>
+      <p>Вы имеете право в любой момент:</p>
+      <p>— Запросить копию своих данных<br>
+      — Исправить неточные данные<br>
+      — Удалить аккаунт и все связанные данные<br>
+      — Отозвать согласие на обработку данных</p>
+      <p>Для удаления аккаунта: напишите на <a href="mailto:privacy@kakai.kz" style="color:var(--green);font-weight:600">privacy@kakai.kz</a> с темой «Удаление аккаунта». Данные будут удалены в течение 30 дней.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">8</div>
+      <h2>Push-уведомления</h2>
+      <p>Приложение использует push-уведомления через сервис Expo Push Notifications для оповещения о выполненных заданиях. Вы можете отключить уведомления в настройках вашего устройства в любой момент.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">9</div>
+      <h2>Изменения политики</h2>
+      <p>При существенных изменениях данной политики мы уведомим пользователей через push-уведомление или при следующем входе в приложение. Дата последнего обновления указана вверху страницы.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">10</div>
+      <h2>Контакты</h2>
+      <p>По любым вопросам, связанным с конфиденциальностью данных:</p>
+      <div class="contact-box">
+        <p>📧 Email: <a href="mailto:privacy@kakai.kz">privacy@kakai.kz</a></p>
+        <p>🌐 Сайт: <a href="https://kakai.kz">kakai.kz</a></p>
+        <p>📱 Приложения: Kakai — Родительский контроль, Kakai — Задания для детей</p>
+        <p style="margin-top:8px;color:#5A7A65 !important;">Мы отвечаем в течение 5 рабочих дней.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- KAZAKH -->
+  <div class="lang-kz">
+
+    <div class="hero">
+      <div class="hero-label">Заңды құжат</div>
+      <h1>Құпиялылық саясаты</h1>
+      <p>Kakai — балалардың тапсырмалары мен экран уақытын басқару қосымшасы</p>
+      <span class="updated">Жаңартылды: 2025 жылғы 1 ақпан</span>
+    </div>
+
+    <div class="section">
+      <div class="section-num">1</div>
+      <h2>Жалпы ережелер</h2>
+      <p>Осы Құпиялылық саясаты Kakai қосымшаларының (ата-аналарға арналған «Kakai — Ата-ана бақылауы» және балаларға арналған «Kakai — Балалар тапсырмалары») пайдаланушылардың жеке деректерін қалай жинайтынын, пайдаланатынын және қорғайтынын сипаттайды.</p>
+      <p>Kakai қосымшаларын пайдалана отырып, сіз осы саясаттың шарттарымен келісесіз.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">2</div>
+      <h2>Біз кімбіз</h2>
+      <p>Жеке деректердің операторы — Қазақстан Республикасында тіркелген Kakai қосымшасының жеке кәсіпкер әзірлеушісі.</p>
+      <div class="contact-box">
+        <p>📧 Барлық құпиялылық мәселелері бойынша: <a href="mailto:privacy@kakai.kz">privacy@kakai.kz</a></p>
+        <p>🌐 Сайт: <a href="https://kakai.kz">kakai.kz</a></p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">3</div>
+      <h2>Қандай деректер жинаймыз</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Деректер түрі</th>
+            <th>Қосымша</th>
+            <th>Мақсат</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Email мекенжайы</td><td>Ата-ана</td><td>Тіркеу және кіру</td></tr>
+          <tr><td>Пайдаланушы аты</td><td>Екеуі де</td><td>Интерфейсте көрсету</td></tr>
+          <tr><td>Отбасы шақыру коды</td><td>Бала</td><td>Отбасылық аккаунтқа қосылу</td></tr>
+          <tr><td>Тапсырмалар деректері</td><td>Екеуі де</td><td>Қосымшаның негізгі функционалы</td></tr>
+          <tr><td>Экран уақыты балансы</td><td>Екеуі де</td><td>Тапсырылған уақытты есепке алу</td></tr>
+          <tr><td>Орындалған тапсырмалардың фотосы</td><td>Бала</td><td>Тапсырмалардың орындалуын растау</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight">
+        ⚠️ Біз қазіргі MVP нұсқасында геолокацияны, контактілерді, SMS, браузер тарихын немесе басқа қосымшалардың деректерін ЖИНАМАЙМЫЗ.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">4</div>
+      <h2>Балалардың деректері</h2>
+      <p>«Kakai — Балалар тапсырмалары» қосымшасы 6 жастан бастап балаларға арналған. Біз кәмелетке толмағандардың деректерін қорғауды өте маңызды деп санаймыз.</p>
+      <p><strong>Бала отбасылық аккаунтқа тек ата-ананың шақыру коды арқылы қосыла алады.</strong> Ата-ананың білімінсіз балаларды өз бетімен тіркеу мүмкін емес.</p>
+      <p>Баланың деректері (аты, тапсырмалары, уақыт балансы) тек осы отбасының ата-анасына ғана көрінеді. Деректер базасы деңгейінде үшінші тараптардың қол жеткізуі жоқ.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">5</div>
+      <h2>Деректерді қалай пайдаланамыз</h2>
+      <p>Жиналған деректер тек мыналар үшін пайдаланылады:</p>
+      <p>— Қосымшаның негізгі функционалын қамтамасыз ету (тапсырмалар, экран уақыты)<br>
+      — Отбасылық аккаунттағы пайдаланушыларды сәйкестендіру<br>
+      — Орындалған тапсырмалар туралы push-хабарландырулар жіберу<br>
+      — Қосымша сапасын жақсарту</p>
+      <div class="highlight">
+        🚫 Біз сіздің жеке деректеріңізді үшінші тараптарға ешқашан сатпаймыз, бермейміз және монетизацияламаймыз.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-num">6</div>
+      <h2>Деректерді сақтау және қауіпсіздік</h2>
+      <p>Барлық деректер берілу кезінде (HTTPS/TLS) және тыныштық күйінде шифрлаумен Supabase серверлерінде сақталады.</p>
+      <p>Деректерге қол жеткізу Row Level Security жүйесімен қорғалған — әр пайдаланушы тек өз деректерін көреді.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">7</div>
+      <h2>Сіздің құқықтарыңыз</h2>
+      <p>Сіз кез келген уақытта:</p>
+      <p>— Деректеріңіздің көшірмесін сұрай аласыз<br>
+      — Дұрыс емес деректерді түзете аласыз<br>
+      — Аккаунтты және барлық байланысты деректерді жоя аласыз<br>
+      — Деректерді өңдеуге берген келісімді кері қайтара аласыз</p>
+      <p>Аккаунтты жою үшін: «Аккаунтты жою» тақырыбымен <a href="mailto:privacy@kakai.kz" style="color:var(--green);font-weight:600">privacy@kakai.kz</a> мекенжайына жазыңыз. Деректер 30 күн ішінде жойылады.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-num">8</div>
+      <h2>Байланыс</h2>
+      <p>Деректер құпиялылығына қатысты кез келген сұрақтар бойынша:</p>
+      <div class="contact-box">
+        <p>📧 Email: <a href="mailto:privacy@kakai.kz">privacy@kakai.kz</a></p>
+        <p>🌐 Сайт: <a href="https://kakai.kz">kakai.kz</a></p>
+        <p style="margin-top:8px;color:#5A7A65 !important;">Біз 5 жұмыс күні ішінде жауап береміз.</p>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  <strong>Kakai.kz</strong> — © 2025. Все права защищены.<br>
+  <span style="font-size:12px;margin-top:4px;display:block">kz.kakai.parent · kz.kakai.child</span>
+</footer>
+
+<script>
+function setLang(lang) {
+  const body = document.getElementById('body');
+  const btnRu = document.getElementById('btn-ru');
+  const btnKz = document.getElementById('btn-kz');
+  if (lang === 'kz') {
+    body.classList.add('kz');
+    btnKz.classList.add('active');
+    btnRu.classList.remove('active');
+  } else {
+    body.classList.remove('kz');
+    btnRu.classList.add('active');
+    btnKz.classList.remove('active');
+  }
+}
+</script>
+
+</body>
+</html>
