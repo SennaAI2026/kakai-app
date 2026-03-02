@@ -1,13 +1,17 @@
 {
   "name": "kakai-app",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+    "parent": "cd apps/parent && npx expo start",
+    "child": "cd apps/child && npx expo start",
+    "parent:android": "cd apps/parent && npx expo start --android",
+    "child:android": "cd apps/child && npx expo start --android",
+    "parent:web": "cd apps/parent && npx expo start --web",
+    "child:web": "cd apps/child && npx expo start --web"
+  }
 }

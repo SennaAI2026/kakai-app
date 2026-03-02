@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">Kakai использует службу специальных возможностей для контроля экранного времени и блокировки приложений по расписанию, установленному родителем.</string>
+    <string name="device_admin_description">Kakai использует права администратора для защиты приложения от удаления ребёнком.</string>
+</resources>
