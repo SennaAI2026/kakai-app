@@ -1,26 +1,19 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'org.jetbrains.kotlin.android'
 
 group = 'kz.kakai.blocker'
 version = '0.1.0'
 
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useDefaultAndroidSdkVersions()
+
 android {
   namespace "kz.kakai.blocker"
-  compileSdkVersion 34
 
   defaultConfig {
     minSdkVersion 24
-    targetSdkVersion 34
-  }
-
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_17
-    targetCompatibility JavaVersion.VERSION_17
-  }
-
-  kotlinOptions {
-    jvmTarget = "17"
   }
 
   sourceSets {
@@ -31,7 +24,5 @@ android {
 }
 
 dependencies {
-  implementation project(':expo-modules-core')
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
   implementation "androidx.core:core-ktx:1.12.0"
 }

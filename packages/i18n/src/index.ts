@@ -1,13 +1,10 @@
-import { I18n } from 'i18n-js';
 import * as Localization from 'expo-localization';
 
 import ru from './ru.json';
 import kz from './kz.json';
 
-const i18n = new I18n({
-  ru,
-  kz,
-});
+const translations: Record<string, any> = { ru, kz };
+let currentLocale: 'ru' | 'kz' = 'ru';
 
 // Detect locale: map 'kk' (Kazakh BCP-47) → 'kz' (our key), default to 'ru'
 function detectLocale(): 'ru' | 'kz' {
@@ -17,16 +14,35 @@ function detectLocale(): 'ru' | 'kz' {
   return lang === 'kk' ? 'kz' : 'ru';
 }
 
-i18n.locale = detectLocale();
-i18n.enableFallback = true;
-i18n.defaultLocale = 'ru';
+currentLocale = detectLocale();
 
-export { i18n };
-
-export function setLocale(locale: 'ru' | 'kz') {
-  i18n.locale = locale;
+export function t(key: string, options?: Record<string, string | number>): string {
+  const keys = key.split('.');
+  let value: any = translations[currentLocale];
+  for (const k of keys) {
+    value = value?.[k];
+  }
+  if (!value) {
+    // Fallback to Russian
+    let fallback: any = translations.ru;
+    for (const k of keys) {
+      fallback = fallback?.[k];
+    }
+    return fallback ?? key;
+  }
+  if (options) {
+    return Object.entries(options).reduce(
+      (str, [k, v]) => str.replace(`{{${k}}}`, String(v)),
+      value,
+    );
+  }
+  return value;
 }
 
-export function t(scope: string, options?: Record<string, unknown>): string {
-  return i18n.t(scope, options);
+export function setLocale(locale: 'ru' | 'kz') {
+  currentLocale = locale;
+}
+
+export function getLocale(): 'ru' | 'kz' {
+  return currentLocale;
 }
