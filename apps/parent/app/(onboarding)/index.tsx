@@ -1,703 +1,743 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Animated, Dimensions,
+  View, Text, TouchableOpacity, StyleSheet, Image,
+  Dimensions, ScrollView, StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+const { width: W, height: H } = Dimensions.get('window');
+const GREEN = '#2DB573';
+const DARK = '#1A1A2E';
+const BG = '#F0F2F5';
+const GRAY = '#6B7280';
+const LIGHT_GRAY = '#E5E7EB';
+const YELLOW = '#FEF3C7';
+const DOT_COUNT = 7;
+const SLIDE_COUNT = 13;
 
-const { width: W } = Dimensions.get('window');
-const STEP_COUNT = 10; // steps 0–9; step 9 auto-navigates to paywall
+const IMAGES = {
+  mascot: require('../../assets/giraffe_10_mascot.png'),
+  welcome: require('../../assets/giraffe_welcome.png'),
+  block: require('../../assets/giraffe_block.png'),
+  sleep: require('../../assets/giraffe_sleep.png'),
+  youtube: require('../../assets/giraffe_youtube.png'),
+  limit: require('../../assets/giraffe_limit.png'),
+  tasks: require('../../assets/giraffe_tasks.png'),
+  gps: require('../../assets/giraffe_gps.png'),
+  rating: require('../../assets/giraffe_rating.png'),
+  roleBg: require('../../assets/giraffe_role_bg.png'),
+  couplePhoto: require('../../assets/couple_photo.png'),
+  parentIcon: require('../../assets/parent-icon-512.png'),
+  childIcon: require('../../assets/child-icon-512.png'),
+  bgLight: require('../../assets/bg_light.png'),
+};
 
-// Which steps are quiz steps (need Yes/No before continuing)
-const QUIZ_STEPS = new Set([1, 3, 5, 7]);
+// ─── Translations ───────────────────────────────────────────────────────────
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const translations = {
+  kz: {
+    // 0
+    welcomeTitle: 'Баланың телефонына\nшектеу қойыңыз',
+    welcomeSub: '«kakai» — аналар мен әкелер бала зиянды нәрсеге қол созғанда айтады. Телефон — да солай.',
+    // 1
+    blockTitle: 'Қосымшаларға кіруді\nбір басумен бұғаттаңыз',
+    // 2
+    sleepTitle: 'Ұйқы мен оқу уақытында\nқосымшаларға кіруді шектеңіз',
+    // 3
+    youtubeTitle: 'Сайттар мен YouTube\nкіруді бақылаңыз',
+    // 4
+    limitTitle: 'Күнделікті уақыт шегін\nойын-сауық үшін белгілеңіз',
+    // 5
+    tasksTitle: 'Күнделікті лимитті пайдалы\nтапсырмалар орындау арқылы\nарттырыңыз',
+    // 6
+    gpsTitle: 'Бала мектептен шыққанда\nавтоматты хабарлама алыңыз',
+    gpsNotif: 'Бала мектептен шықты',
+    start: 'Бастау',
+    skip: 'Өткізу',
+    // 7
+    surveyBubble: 'Біз туралы қайдан білдіңіз?',
+    surveyOpt1: 'YouTube немесе онлайн-видео',
+    surveyOpt2: 'Достар немесе отбасы ұсынысы',
+    surveyOpt3: 'Instagram немесе TikTok',
+    surveyOpt4: 'Дәрігер немесе маман',
+    surveyOpt5: 'App Store / Google Play',
+    surveyOpt6: 'Блогер немесе ата-ана форумы',
+    surveyOpt7: 'Басқа',
+    // 8
+    ratingTitle: 'Бағалағаныңыз үшін\nрахмет',
+    continue: 'Жалғастыру',
+    // 9
+    pushTitle: 'Хабарламаларды қосыңыз,\nбаладан хабардар болу үшін',
+    allow: 'Рұқсат ету',
+    later: 'Кейінірек',
+    // 10
+    roleTitle: 'Бұл құрылғыны кім пайдаланады?',
+    parent: 'Ата-ана',
+    parentSub: 'Бұл менің телефоным',
+    child: 'Бала',
+    childSub: 'Бұл баланың телефоны',
+    // 11
+    back: 'Артқа',
+    kakaiParent: 'Ата-ана үшін',
+    kakaiBala: 'Бала үшін',
+    stepDone: 'Kakai ата-ана телефонына орнатылды',
+    stepNext: 'Баланың телефонын баптайық',
+    setupChild: 'Баланың телефонын баптау',
+    // 12
+    sendLinkTitle: 'Баланың телефонын баптау үшін, оған Kakai Bala қосымшасына сілтеме жіберіңіз',
+    sendLinkDesc: 'Kakai Bala қосымшасы баланың деректерін ата-ана қосымшасы Kakai-ге жібереді',
+    sendLink: 'Балаға сілтеме жіберу',
+    otherMethod: 'Басқа тәсіл',
+  },
+  ru: {
+    welcomeTitle: 'Установите лимиты\nдля телефона ребёнка',
+    welcomeSub: '«kakai» — так мамы и папы говорят когда ребёнок тянется к чему-то вредному. Телефон — тоже.',
+    blockTitle: 'Блокируйте доступ\nк приложениям одним\nнажатием',
+    sleepTitle: 'Ограничивайте доступ\nк приложениям на время\nсна и учёбы',
+    youtubeTitle: 'Контролируйте посещение\nсайтов и просмотры\nна YouTube',
+    limitTitle: 'Установите дневной лимит\nвремени для развлечений\nв телефоне',
+    tasksTitle: 'Увеличивайте дневной лимит\nза выполнение полезных\nзаданий',
+    gpsTitle: 'Автоматически получайте\nуведомления когда ребёнок\nвыходит из школы',
+    gpsNotif: 'Ребёнок вышел из школы',
+    start: 'Начать',
+    skip: 'Пропустить',
+    surveyBubble: 'Откуда вы узнали о нас?',
+    surveyOpt1: 'YouTube или онлайн-видео',
+    surveyOpt2: 'Рекомендация друзей или семьи',
+    surveyOpt3: 'Instagram или TikTok',
+    surveyOpt4: 'Педиатр или специалист',
+    surveyOpt5: 'App Store / Google Play',
+    surveyOpt6: 'Блогер или родительский форум',
+    surveyOpt7: 'Другое',
+    ratingTitle: 'Спасибо за вашу\nоценку',
+    continue: 'Продолжить',
+    pushTitle: 'Разрешите уведомления\nчтобы быть в курсе',
+    allow: 'Разрешить',
+    later: 'Позже',
+    roleTitle: 'Кто будет пользоваться этим устройством?',
+    parent: 'Родитель',
+    parentSub: 'Это мой телефон',
+    child: 'Ребёнок',
+    childSub: 'Это телефон ребёнка',
+    back: 'Назад',
+    kakaiParent: 'Для родителя',
+    kakaiBala: 'Для ребёнка',
+    stepDone: 'Kakai установлено на телефон родителя',
+    stepNext: 'Давайте настроим телефон ребёнка',
+    setupChild: 'Настроить телефон ребёнка',
+    sendLinkTitle: 'Чтобы настроить телефон ребёнка, отправьте ему ссылку на детское приложение Kakai Bala',
+    sendLinkDesc: 'Приложение Kakai Bala отправляет данные ребёнка на родительское приложение Kakai',
+    sendLink: 'Отправить ссылку ребёнку',
+    otherMethod: 'Другой способ',
+  },
+  en: {
+    welcomeTitle: 'Set limits for\nyour child\'s phone',
+    welcomeSub: '"kakai" is what parents say when a child reaches for something harmful. The phone counts too.',
+    blockTitle: 'Block access to apps\nwith a single tap',
+    sleepTitle: 'Restrict access to apps\nduring sleep and\nschool hours',
+    youtubeTitle: 'Control website visits\nand YouTube viewing',
+    limitTitle: 'Set a daily time limit\nfor entertainment\non the phone',
+    tasksTitle: 'Increase daily limit\nby completing useful\ntasks',
+    gpsTitle: 'Automatically get notifications\nwhen your child leaves\nschool',
+    gpsNotif: 'Child left school',
+    start: 'Get Started',
+    skip: 'Skip',
+    surveyBubble: 'How did you hear about us?',
+    surveyOpt1: 'YouTube or online video',
+    surveyOpt2: 'Friends or family recommendation',
+    surveyOpt3: 'Instagram or TikTok',
+    surveyOpt4: 'Pediatrician or specialist',
+    surveyOpt5: 'App Store / Google Play',
+    surveyOpt6: 'Blogger or parenting forum',
+    surveyOpt7: 'Other',
+    ratingTitle: 'Thank you for\nyour rating',
+    continue: 'Continue',
+    pushTitle: 'Enable notifications\nto stay informed',
+    allow: 'Allow',
+    later: 'Later',
+    roleTitle: 'Who will be using this device?',
+    parent: 'Parent',
+    parentSub: 'This is my phone',
+    child: 'Child',
+    childSub: 'This is the child\'s phone',
+    back: 'Back',
+    kakaiParent: 'For parent',
+    kakaiBala: 'For child',
+    stepDone: 'Kakai installed on parent\'s phone',
+    stepNext: 'Let\'s set up the child\'s phone',
+    setupChild: 'Set up child\'s phone',
+    sendLinkTitle: 'To set up the child\'s phone, send them a link to the Kakai Bala app',
+    sendLinkDesc: 'The Kakai Bala app sends the child\'s data to the parent Kakai app',
+    sendLink: 'Send link to child',
+    otherMethod: 'Other method',
+  },
+};
 
-type Answers = Partial<Record<number, boolean>>;
+type Lang = keyof typeof translations;
+type T = (typeof translations)['ru'];
 
-// ─── Shared primitives ────────────────────────────────────────────────────────
+const LANGS: { key: Lang; label: string }[] = [
+  { key: 'kz', label: 'KZ \u049Aa\u0437' },
+  { key: 'ru', label: 'RU \u0420\u0443\u0441' },
+  { key: 'en', label: 'EN Eng' },
+];
 
-function Btn({ label, onPress }: { label: string; onPress: () => void }) {
+// ─── Reusable Components ────────────────────────────────────────────────────
+
+/** Full-screen background image (works on web + native) */
+function BgImage({ source, resizeMode = 'cover', bgColor, children }: {
+  source: any;
+  resizeMode?: 'cover' | 'contain';
+  bgColor?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <TouchableOpacity style={b.btn} onPress={onPress} activeOpacity={0.85}>
-      <Text style={b.btnText}>{label}</Text>
+    <View style={[StyleSheet.absoluteFill, { flex: 1 }, bgColor ? { backgroundColor: bgColor } : null]}>
+      <Image
+        source={source}
+        style={StyleSheet.absoluteFill}
+        resizeMode={resizeMode}
+      />
+      <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function LangPicker({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
+  return (
+    <View style={lp.row}>
+      {LANGS.map((l) => (
+        <TouchableOpacity
+          key={l.key}
+          style={[lp.chip, lang === l.key && lp.active]}
+          onPress={() => onChange(l.key)}
+          activeOpacity={0.7}
+        >
+          <Text style={[lp.label, lang === l.key && lp.labelActive]}>{l.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+const lp = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
+  chip: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: '#D1D5DB', backgroundColor: '#fff' },
+  active: { borderColor: GREEN, backgroundColor: GREEN },
+  label: { fontSize: 13, fontWeight: '600', color: GRAY },
+  labelActive: { color: '#fff' },
+});
+
+function Dots({ count, active }: { count: number; active: number }) {
+  return (
+    <View style={dt.row}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View key={i} style={[dt.dot, i === active && dt.dotActive]} />
+      ))}
+    </View>
+  );
+}
+const dt = StyleSheet.create({
+  row: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 12 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D1D5DB' },
+  dotActive: { backgroundColor: GREEN },
+});
+
+function GreenBtn({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+  return (
+    <TouchableOpacity
+      style={[gb.btn, disabled && { opacity: 0.5 }]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      disabled={disabled}
+    >
+      <Text style={gb.text}>{label}</Text>
     </TouchableOpacity>
   );
 }
-
-const b = StyleSheet.create({
-  btn: { backgroundColor: '#0FA968', borderRadius: 16, padding: 18, alignItems: 'center', marginHorizontal: 24 },
-  btnText: { color: 'white', fontSize: 16, fontWeight: '800' },
+const gb = StyleSheet.create({
+  btn: { backgroundColor: GREEN, borderRadius: 16, height: 56, justifyContent: 'center', alignItems: 'center', marginHorizontal: 20 },
+  text: { color: '#fff', fontSize: 18, fontWeight: '700' },
 });
 
-// ─── Step 0: Welcome ──────────────────────────────────────────────────────────
+function Card({ children, style }: { children: React.ReactNode; style?: any }) {
+  return <View style={[cc.card, style]}>{children}</View>;
+}
+const cc = StyleSheet.create({
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 24, marginHorizontal: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 },
+});
 
-function StepWelcome({ onNext }: { onNext: () => void }) {
-  const scaleAnim = useRef(new Animated.Value(0.7)).current;
-  const fadeAnim  = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, { toValue: 1, friction: 6, useNativeDriver: true }),
-      Animated.timing(fadeAnim,  { toValue: 1, duration: 500, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
+function Bubble({ text }: { text: string }) {
   return (
-    <Animated.View style={[p.page, { opacity: fadeAnim }]}>
-      <Animated.Text style={[p.welcomeLogo, { transform: [{ scale: scaleAnim }] }]}>🛡️</Animated.Text>
-      <Text style={p.welcomeTitle}>Kakai</Text>
-      <Text style={p.welcomeSub}>Умный родительский контроль{'\n'}для Казахстана</Text>
+    <View style={bb.bubble}>
+      <Text style={bb.text}>{text}</Text>
+    </View>
+  );
+}
+const bb = StyleSheet.create({
+  bubble: { backgroundColor: YELLOW, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16, marginBottom: 6 },
+  text: { fontSize: 15, fontWeight: '600', color: DARK },
+});
 
-      <View style={p.welcomeDots}>
-        {['Контроль времени', 'Расписание', 'GPS', 'Задания'].map((item, i) => (
-          <View key={i} style={p.welcomeDotRow}>
-            <View style={p.welcomeDotDot} />
-            <Text style={p.welcomeDotText}>{item}</Text>
-          </View>
-        ))}
+const overlay = StyleSheet.create({
+  textBox: { backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 16, padding: 16, marginHorizontal: 20 },
+  title: { fontSize: 26, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 34 },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 0 — Welcome
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide0({ t, lang, setLang, onNext }: { t: T; lang: Lang; setLang: (l: Lang) => void; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.welcome}>
+      <View style={{ position: 'absolute', top: 50, alignSelf: 'center', zIndex: 10 }}>
+        <LangPicker lang={lang} onChange={setLang} />
       </View>
 
-      <Text style={p.welcomeHint}>Пройдём короткий опрос и настроим{'\n'}Kakai именно под вашу семью</Text>
-      <View style={{ height: 32 }} />
-      <Btn label="Начать →" onPress={onNext} />
-    </Animated.View>
+      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
+        <Card>
+          <Text style={{ fontSize: 26, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 34 }}>
+            {t.welcomeTitle}
+          </Text>
+          <Text style={{ fontSize: 15, color: GRAY, textAlign: 'center', lineHeight: 22, marginTop: 10 }}>
+            {t.welcomeSub}
+          </Text>
+        </Card>
+
+        <Dots count={DOT_COUNT} active={0} />
+      </TouchableOpacity>
+    </BgImage>
   );
 }
 
-// ─── Step 1, 3, 5, 7: Quiz ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 1 — Block Apps
+// ═══════════════════════════════════════════════════════════════════════════
 
-function StepQuiz({
-  emoji, question,
-  yesLabel, noLabel,
-  empathyYes, empathyNo,
-  answer, onPick, onNext,
-}: {
-  emoji: string;
-  question: string;
-  yesLabel: string;
-  noLabel: string;
-  empathyYes: string;
-  empathyNo: string;
-  answer: boolean | undefined;
-  onPick: (v: boolean) => void;
-  onNext: () => void;
-}) {
-  const empOpacity = useRef(new Animated.Value(answer !== undefined ? 1 : 0)).current;
-  const empY       = useRef(new Animated.Value(answer !== undefined ? 0 : 12)).current;
+function Slide1({ t, onNext }: { t: T; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.block}>
+      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
+        <View style={overlay.textBox}>
+          <Text style={overlay.title}>{t.blockTitle}</Text>
+        </View>
+        <Dots count={DOT_COUNT} active={1} />
+      </TouchableOpacity>
+    </BgImage>
+  );
+}
 
-  function pick(val: boolean) {
-    if (answer !== undefined) return;
-    onPick(val);
-    Animated.parallel([
-      Animated.timing(empOpacity, { toValue: 1, duration: 320, useNativeDriver: true }),
-      Animated.spring(empY, { toValue: 0, friction: 7, useNativeDriver: true }),
-    ]).start();
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 2 — Sleep
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide2({ t, onNext }: { t: T; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.sleep}>
+      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
+        <View style={overlay.textBox}>
+          <Text style={overlay.title}>{t.sleepTitle}</Text>
+        </View>
+        <Dots count={DOT_COUNT} active={2} />
+      </TouchableOpacity>
+    </BgImage>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 3 — YouTube / Sites
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide3({ t, onNext }: { t: T; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.youtube} bgColor="#C8CCD0">
+      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
+        <View style={overlay.textBox}>
+          <Text style={overlay.title}>{t.youtubeTitle}</Text>
+        </View>
+        <Dots count={DOT_COUNT} active={3} />
+      </TouchableOpacity>
+    </BgImage>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 4 — Daily Limit
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide4({ t, onNext }: { t: T; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.limit}>
+      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
+        <View style={overlay.textBox}>
+          <Text style={overlay.title}>{t.limitTitle}</Text>
+        </View>
+        <Dots count={DOT_COUNT} active={4} />
+      </TouchableOpacity>
+    </BgImage>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 5 — Tasks
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide5({ t, onNext }: { t: T; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.tasks}>
+      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
+        <View style={overlay.textBox}>
+          <Text style={overlay.title}>{t.tasksTitle}</Text>
+        </View>
+        <Dots count={DOT_COUNT} active={5} />
+      </TouchableOpacity>
+    </BgImage>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 6 — GPS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide6({ t, onNext }: { t: T; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.gps}>
+      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <View style={overlay.textBox}>
+          <Text style={overlay.title}>{t.gpsTitle}</Text>
+        </View>
+        <View style={{ paddingTop: 16, paddingBottom: 8 }}>
+          <GreenBtn label={t.start} onPress={onNext} />
+        </View>
+        <Dots count={DOT_COUNT} active={6} />
+      </View>
+    </BgImage>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 7 — Survey
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide7({ t, onSelect, onSkip }: { t: T; onSelect: (v: string) => void; onSkip: () => void }) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const options = [t.surveyOpt1, t.surveyOpt2, t.surveyOpt3, t.surveyOpt4, t.surveyOpt5, t.surveyOpt6, t.surveyOpt7];
+
+  function handleSelect(i: number) {
+    if (selected !== null) return;
+    setSelected(i);
+    timerRef.current = setTimeout(() => onSelect(options[i]), 400);
   }
 
-  const isYes = answer === true;
-  const picked = answer !== undefined;
-
   return (
-    <ScrollView contentContainerStyle={p.quizPage} bounces={false}>
-      <Text style={p.quizEmoji}>{emoji}</Text>
-      <Text style={p.quizQuestion}>{question}</Text>
-
-      <View style={p.choices}>
-        <TouchableOpacity
-          style={[p.choice, picked && answer === true && p.choiceYes, picked && answer === false && p.choiceUnpicked]}
-          onPress={() => pick(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={p.choiceEmoji}>✅</Text>
-          <Text style={[p.choiceText, picked && answer === true && p.choiceTextYes]}>{yesLabel}</Text>
+    <BgImage source={IMAGES.bgLight}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <TouchableOpacity style={s7.skipBtn} onPress={onSkip} activeOpacity={0.7}>
+          <Text style={s7.skipText}>{t.skip}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[p.choice, picked && answer === false && p.choiceNo, picked && answer === true && p.choiceUnpicked]}
-          onPress={() => pick(false)}
-          activeOpacity={0.8}
-        >
-          <Text style={p.choiceEmoji}>🤔</Text>
-          <Text style={[p.choiceText, picked && answer === false && p.choiceTextNo]}>{noLabel}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {picked && (
-        <Animated.View style={[p.empathy, isYes ? p.empYes : p.empNo, { opacity: empOpacity, transform: [{ translateY: empY }] }]}>
-          <Text style={[p.empText, isYes ? p.empTextYes : p.empTextNo]}>
-            {isYes ? empathyYes : empathyNo}
-          </Text>
-        </Animated.View>
-      )}
-
-      <View style={{ flex: 1, minHeight: 24 }} />
-
-      {picked && <Btn label="Продолжить →" onPress={onNext} />}
-    </ScrollView>
-  );
-}
-
-// ─── Step 2: Feature — Screen time ───────────────────────────────────────────
-
-function StepFeatureScreenTime({ onNext }: { onNext: () => void }) {
-  const numAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(numAnim,  { toValue: 1, duration: 1200, useNativeDriver: false }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500,  useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const pctText = numAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '62%'] });
-
-  return (
-    <Animated.View style={[p.page, { opacity: fadeAnim }]}>
-      <View style={p.statCard}>
-        <Animated.Text style={p.statBig}>{pctText}</Animated.Text>
-        <Text style={p.statLabel}>среднее сокращение экранного времени{'\n'}у детей родителей Kakai</Text>
-      </View>
-
-      <View style={p.featureList}>
-        {[
-          { emoji: '⏱', title: 'Лимит по времени', desc: 'Установите дневной лимит для каждого приложения или для телефона целиком' },
-          { emoji: '🔒', title: 'Мгновенная блокировка', desc: 'Заблокируйте телефон одним нажатием из любой точки' },
-          { emoji: '📊', title: 'Подробная статистика', desc: 'Видите какие приложения отнимают больше всего времени' },
-        ].map(({ emoji, title, desc }) => (
-          <View key={title} style={p.featureRow}>
-            <View style={p.featureIcon}>
-              <Text style={p.featureEmoji}>{emoji}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={p.featureTitle}>{title}</Text>
-              <Text style={p.featureDesc}>{desc}</Text>
-            </View>
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          <View style={{ alignItems: 'center', paddingTop: 8 }}>
+            <Image source={IMAGES.mascot} style={{ width: 120, height: 120 }} resizeMode="contain" />
+            <Bubble text={t.surveyBubble} />
           </View>
-        ))}
-      </View>
 
-      <View style={{ flex: 1 }} />
-      <Btn label="Понятно →" onPress={onNext} />
-    </Animated.View>
+          <View style={{ gap: 8, paddingHorizontal: 20, marginTop: 12 }}>
+            {options.map((opt, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[s7.option, selected === i && s7.optionSelected]}
+                onPress={() => handleSelect(i)}
+                activeOpacity={0.7}
+              >
+                <Text style={s7.optionText}>{opt}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </BgImage>
+  );
+}
+const s7 = StyleSheet.create({
+  skipBtn: { position: 'absolute', top: 54, right: 20, zIndex: 10, padding: 8 },
+  skipText: { fontSize: 15, fontWeight: '600', color: GRAY },
+  option: { backgroundColor: '#fff', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 20, borderWidth: 2, borderColor: 'transparent', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
+  optionSelected: { borderColor: GREEN },
+  optionText: { fontSize: 16, fontWeight: '600', color: DARK },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 8 — Rating
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Slide8({ t, onNext }: { t: T; onNext: () => void }) {
+  return (
+    <BgImage source={IMAGES.rating}>
+      <StatusBar barStyle="dark-content" />
+      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingTop: 28, paddingBottom: 34, paddingHorizontal: 20, minHeight: '35%' }}>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 32 }}>
+            {t.ratingTitle}
+          </Text>
+          <View style={{ flex: 1 }} />
+          <GreenBtn label={t.continue} onPress={onNext} />
+        </View>
+      </View>
+    </BgImage>
   );
 }
 
-// ─── Step 4: Feature — Schedule ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 9 — Push
+// ═══════════════════════════════════════════════════════════════════════════
 
-function StepFeatureSchedule({ onNext }: { onNext: () => void }) {
-  const card1 = useRef(new Animated.Value(0)).current;
-  const card2 = useRef(new Animated.Value(0)).current;
+function Slide9({ t, onAllow, onLater }: { t: T; onAllow: () => void; onLater: () => void }) {
+  return (
+    <BgImage source={IMAGES.bgLight}>
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Image source={IMAGES.mascot} style={{ width: 220, height: 220, alignSelf: 'center' }} resizeMode="contain" />
+        <Text style={{ fontSize: 22, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 30, paddingHorizontal: 24, marginTop: 24 }}>
+          {t.pushTitle}
+        </Text>
+        <View style={{ width: '100%', marginTop: 32, gap: 12 }}>
+          <GreenBtn label={t.allow} onPress={onAllow} />
+          <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 12 }} onPress={onLater} activeOpacity={0.7}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: GRAY }}>{t.later}</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </BgImage>
+  );
+}
 
-  useEffect(() => {
-    Animated.stagger(300, [
-      Animated.spring(card1, { toValue: 1, friction: 6, useNativeDriver: true }),
-      Animated.spring(card2, { toValue: 1, friction: 6, useNativeDriver: true }),
-    ]).start();
-  }, []);
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 10 — Role Selection
+// ═══════════════════════════════════════════════════════════════════════════
 
-  function ScheduleCard({ emoji, label, time, days, color, anim }: {
-    emoji: string; label: string; time: string; days: string; color: string; anim: Animated.Value;
-  }) {
+function Slide10({ t, role, setRole, onNext }: { t: T; role: 'parent' | 'child' | null; setRole: (r: 'parent' | 'child') => void; onNext: () => void }) {
+  function RoleCard({ value, label, sub }: { value: 'parent' | 'child'; label: string; sub: string }) {
+    const active = role === value;
     return (
-      <Animated.View style={[p.schedCard, {
-        opacity: anim,
-        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
-      }]}>
-        <View style={[p.schedIcon, { backgroundColor: color + '22' }]}>
-          <Text style={{ fontSize: 22 }}>{emoji}</Text>
+      <TouchableOpacity
+        style={[s10.card, active && s10.cardActive]}
+        onPress={() => setRole(value)}
+        activeOpacity={0.8}
+      >
+        <View style={[s10.radio, active && s10.radioActive]}>
+          {active && <View style={s10.radioInner} />}
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={p.schedLabel}>{label}</Text>
-          <Text style={[p.schedTime, { color }]}>{time}</Text>
-          <Text style={p.schedDays}>{days}</Text>
+          <Text style={[s10.cardLabel, active && { color: '#fff' }]}>{label}</Text>
+          <Text style={[s10.cardSub, active && { color: 'rgba(255,255,255,0.85)' }]}>{sub}</Text>
         </View>
-        <Text style={{ fontSize: 20 }}>🔒</Text>
-      </Animated.View>
+        {value === 'parent' ? (
+          <Image source={IMAGES.couplePhoto} style={{ width: 50, height: 50, borderRadius: 25 }} />
+        ) : (
+          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: active ? 'rgba(255,255,255,0.2)' : LIGHT_GRAY }} />
+        )}
+      </TouchableOpacity>
     );
   }
 
   return (
-    <View style={p.page}>
-      <Text style={p.featureHeadEmoji}>📅</Text>
-      <Text style={p.featureHead}>Телефон сам знает{'\n'}когда засыпать</Text>
-      <Text style={p.featureSubhead}>Задайте расписание один раз — и Kakai будет автоматически блокировать телефон в нужное время</Text>
+    <BgImage source={IMAGES.roleBg}>
+      <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={{ flex: 1 }}>
+        <Text style={s10.heading}>{t.roleTitle}</Text>
 
-      <ScheduleCard
-        emoji="🌙" label="Ночной режим"
-        time="22:00 – 07:00" days="Каждый день"
-        color="#6D28D9" anim={card1}
-      />
-      <ScheduleCard
-        emoji="🏫" label="Школа"
-        time="08:00 – 14:30" days="Пн – Пт"
-        color="#D97706" anim={card2}
-      />
-
-      <View style={p.schedBadge}>
-        <Text style={p.schedBadgeText}>✨ Работает автоматически, без вашего участия</Text>
-      </View>
-
-      <View style={{ flex: 1 }} />
-      <Btn label="Понятно →" onPress={onNext} />
-    </View>
-  );
-}
-
-// ─── Step 6: Feature — GPS ────────────────────────────────────────────────────
-
-function StepFeatureGps({ onNext }: { onNext: () => void }) {
-  const pulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.3, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1,   duration: 800, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  return (
-    <View style={p.page}>
-      <Text style={p.featureHeadEmoji}>📍</Text>
-      <Text style={p.featureHead}>Всегда знайте{'\n'}где ваш ребёнок</Text>
-
-      {/* Mini map mock */}
-      <View style={p.gpsMapWrap}>
-        <View style={p.gpsMapBg}>
-          {/* Roads */}
-          <View style={[p.gpsRoad, { top: '45%', left: 0, right: 0, height: 8 }]} />
-          <View style={[p.gpsRoad, { left: '40%', top: 0, bottom: 0, width: 8 }]} />
-          {/* Blocks */}
-          <View style={[p.gpsBlock, { top: '5%', left: '5%', width: '30%', height: '35%' }]} />
-          <View style={[p.gpsBlock, { top: '5%', left: '45%', width: '25%', height: '35%' }]} />
-          <View style={[p.gpsBlock, { top: '5%', left: '75%', width: '20%', height: '35%' }]} />
-          <View style={[p.gpsBlock, { top: '55%', left: '5%', width: '30%', height: '35%' }]} />
-          <View style={[p.gpsBlock, { top: '55%', left: '45%', width: '48%', height: '35%' }]} />
-          {/* Pin */}
-          <Animated.View style={[p.gpsPinRing, { transform: [{ scale: pulse }] }]} />
-          <View style={p.gpsPinDot} />
+        <View style={{ gap: 12, paddingHorizontal: 20, marginTop: 20 }}>
+          <RoleCard value="parent" label={t.parent} sub={t.parentSub} />
+          <RoleCard value="child" label={t.child} sub={t.childSub} />
         </View>
 
-        {/* Status overlay */}
-        <View style={p.gpsStatusBadge}>
-          <View style={p.gpsOnlineDot} />
-          <Text style={p.gpsStatusText}>В сети · 2 мин назад</Text>
+        <View style={{ flex: 1 }} />
+
+        <View style={{ paddingBottom: 24 }}>
+          <GreenBtn label={t.continue} onPress={onNext} disabled={role === null} />
         </View>
-      </View>
-
-      <View style={p.featureList}>
-        {[
-          { emoji: '🔴', text: 'Обновление местоположения в реальном времени' },
-          { emoji: '📋', text: 'История маршрута за последние 30 дней' },
-          { emoji: '🗺️', text: 'Открыть в Google Maps или Яндекс Картах' },
-        ].map(({ emoji, text }) => (
-          <View key={text} style={p.gpsBulletRow}>
-            <Text style={p.gpsBulletDot}>{emoji}</Text>
-            <Text style={p.gpsBulletText}>{text}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={{ flex: 1 }} />
-      <Btn label="Понятно →" onPress={onNext} />
-    </View>
+      </SafeAreaView>
+    </BgImage>
   );
 }
+const s10 = StyleSheet.create({
+  heading: { fontSize: 26, fontWeight: '800', color: DARK, lineHeight: 34, paddingHorizontal: 24, marginTop: 20, textAlign: 'left' },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, padding: 20, gap: 14, borderWidth: 1, borderColor: LIGHT_GRAY },
+  cardActive: { backgroundColor: GREEN, borderColor: GREEN },
+  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#D1D5DB', justifyContent: 'center', alignItems: 'center' },
+  radioActive: { borderColor: 'rgba(255,255,255,0.6)' },
+  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#fff' },
+  cardLabel: { fontSize: 18, fontWeight: '700', color: DARK },
+  cardSub: { fontSize: 14, color: GRAY, marginTop: 2 },
+});
 
-// ─── Step 8: Social proof — Reviews ──────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 11 — Stepper
+// ═══════════════════════════════════════════════════════════════════════════
 
-const REVIEWS = [
-  { name: 'Айгерим М.',  city: 'Алматы',  text: 'Наконец-то нашла приложение которое реально работает. Сын сам стал выполнять задания чтобы получить больше времени!', stars: 5 },
-  { name: 'Бекзат К.',   city: 'Астана',  text: 'Настроил расписание за 5 минут. Телефон дочки теперь сам выключается в 22:00. Она спит намного лучше.', stars: 5 },
-  { name: 'Наталья Р.',  city: 'Шымкент', text: 'GPS очень помогает. Вижу что ребёнок добрался до школы и домой вернулся. Спокойствие бесценно.', stars: 5 },
-];
-
-function StepReviews({ onNext }: { onNext: () => void }) {
-  const anims = useRef(REVIEWS.map(() => new Animated.Value(0))).current;
-
-  useEffect(() => {
-    Animated.stagger(200, anims.map((a) =>
-      Animated.spring(a, { toValue: 1, friction: 6, useNativeDriver: true })
-    )).start();
-  }, []);
-
+function Slide11({ t, onNext, onBack }: { t: T; onNext: () => void; onBack: () => void }) {
   return (
-    <View style={p.page}>
-      <Text style={p.featureHeadEmoji}>⭐</Text>
-      <Text style={p.featureHead}>Родители уже{'\n'}доверяют Kakai</Text>
-      <Text style={p.featureSubhead}>4.9 · более 2 000 семей в Казахстане</Text>
+    <BgImage source={IMAGES.bgLight}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <TouchableOpacity style={s11.backBtn} onPress={onBack} activeOpacity={0.7}>
+          <Text style={s11.backText}>{'\u2190'} {t.back}</Text>
+        </TouchableOpacity>
 
-      <View style={{ gap: 12 }}>
-        {REVIEWS.map((r, i) => (
-          <Animated.View key={i} style={[p.reviewCard, {
-            opacity: anims[i],
-            transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }],
-          }]}>
-            <Text style={p.reviewStars}>{'⭐'.repeat(r.stars)}</Text>
-            <Text style={p.reviewText}>"{r.text}"</Text>
-            <Text style={p.reviewAuthor}>{r.name}, {r.city}</Text>
-          </Animated.View>
-        ))}
-      </View>
-
-      <View style={{ flex: 1, minHeight: 20 }} />
-      <Btn label="Продолжить →" onPress={onNext} />
-    </View>
-  );
-}
-
-// ─── Step 9: Loading / Personalization ───────────────────────────────────────
-
-const LOADING_ITEMS = [
-  'Анализируем ваши ответы',
-  'Подбираем настройки экранного времени',
-  'Готовим персональный план',
-  'Kakai настроен для вашей семьи ✨',
-];
-
-function StepLoading({ onDone }: { onDone: () => void }) {
-  const [checked, setChecked] = useState<number[]>([]);
-  const barAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-
-    LOADING_ITEMS.forEach((_, i) => {
-      timers.push(setTimeout(() => setChecked((prev) => [...prev, i]), (i + 1) * 700));
-    });
-
-    Animated.timing(barAnim, { toValue: 1, duration: LOADING_ITEMS.length * 700 + 200, useNativeDriver: false }).start();
-
-    timers.push(setTimeout(onDone, LOADING_ITEMS.length * 700 + 400));
-
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  const barWidth = barAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
-
-  return (
-    <View style={[p.page, p.loadingPage]}>
-      <Text style={p.loadingEmoji}>⚙️</Text>
-      <Text style={p.loadingTitle}>Настраиваем Kakai{'\n'}для вашей семьи...</Text>
-
-      <View style={p.loadingBarTrack}>
-        <Animated.View style={[p.loadingBarFill, { width: barWidth }]} />
-      </View>
-
-      <View style={p.loadingItems}>
-        {LOADING_ITEMS.map((item, i) => {
-          const done = checked.includes(i);
-          const active = !done && checked.length === i;
-          return (
-            <View key={i} style={p.loadingRow}>
-              <View style={[p.loadingDot, done && p.loadingDotDone, active && p.loadingDotActive]}>
-                {done ? <Text style={p.loadingDotText}>✓</Text> : active ? <Text style={p.loadingDotText}>…</Text> : null}
+        <View style={{ flex: 1, justifyContent: 'center', paddingTop: 40 }}>
+          <Card style={{ gap: 24 }}>
+            {/* App icons */}
+            <View style={s11.appsRow}>
+              <View style={s11.appCol}>
+                <Image source={IMAGES.parentIcon} style={{ width: 72, height: 72, borderRadius: 18 }} />
+                <Text style={s11.appName}>Kakai</Text>
+                <Text style={s11.appRole}>{t.kakaiParent}</Text>
               </View>
-              <Text style={[p.loadingItemText, done && p.loadingItemDone]}>{item}</Text>
+              <Text style={s11.plus}>+</Text>
+              <View style={s11.appCol}>
+                <Image source={IMAGES.childIcon} style={{ width: 72, height: 72, borderRadius: 18 }} />
+                <Text style={s11.appName}>Kakai Bala</Text>
+                <Text style={s11.appRole}>{t.kakaiBala}</Text>
+              </View>
             </View>
-          );
-        })}
-      </View>
-    </View>
+
+            {/* Stepper */}
+            <View>
+              <View style={s11.stepRow}>
+                <View style={s11.stepDone}>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{'\u2713'}</Text>
+                </View>
+                <Text style={[s11.stepText, { fontWeight: '700' }]}>{t.stepDone}</Text>
+              </View>
+              <View style={s11.stepLine} />
+              <View style={s11.stepRow}>
+                <View style={s11.stepPending} />
+                <Text style={[s11.stepText, { color: GRAY }]}>{t.stepNext}</Text>
+              </View>
+            </View>
+          </Card>
+        </View>
+
+        {/* Mascot */}
+        <Image source={IMAGES.mascot} style={{ width: 140, height: 140, position: 'absolute', bottom: 100, right: 20 }} resizeMode="contain" />
+
+        <View style={{ paddingBottom: 24 }}>
+          <GreenBtn label={t.setupChild} onPress={onNext} />
+        </View>
+      </SafeAreaView>
+    </BgImage>
   );
 }
+const s11 = StyleSheet.create({
+  backBtn: { position: 'absolute', top: 54, left: 20, zIndex: 10, padding: 8 },
+  backText: { fontSize: 17, fontWeight: '600', color: DARK },
+  appsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
+  appCol: { alignItems: 'center', gap: 4 },
+  appName: { fontSize: 14, fontWeight: '700', color: DARK },
+  appRole: { fontSize: 12, color: GRAY },
+  plus: { fontSize: 24, fontWeight: '600', color: GRAY, marginTop: -20 },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  stepDone: { width: 28, height: 28, borderRadius: 14, backgroundColor: GREEN, justifyContent: 'center', alignItems: 'center' },
+  stepPending: { width: 28, height: 28, borderRadius: 14, backgroundColor: LIGHT_GRAY },
+  stepLine: { width: 2, height: 24, backgroundColor: GREEN, marginLeft: 13 },
+  stepText: { fontSize: 15, fontWeight: '600', color: DARK, flex: 1 },
+});
 
-// ─── Main Onboarding Screen ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 12 — Send Link
+// ═══════════════════════════════════════════════════════════════════════════
 
-const QUIZ_DATA: Record<number, {
-  emoji: string; question: string;
-  yesLabel: string; noLabel: string;
-  empathyYes: string; empathyNo: string;
-}> = {
-  1: {
-    emoji: '📱',
-    question: 'Ваш ребёнок проводит слишком много времени с телефоном?',
-    yesLabel: 'Да, это проблема',
-    noLabel: 'Пока не замечаю',
-    empathyYes: 'Вы не одни. Дети в Казахстане проводят в среднем 6+ часов в телефоне ежедневно. Kakai помогает родителям вернуть контроль мягко и без конфликтов.',
-    empathyNo: 'Отлично! Но с ростом ребёнка это часто меняется. Лучше иметь инструмент заранее — и настроить его на свои правила.',
-  },
-  3: {
-    emoji: '🌙',
-    question: 'Ребёнок сидит в телефоне допоздна вместо сна?',
-    yesLabel: 'Да, это проблема',
-    noLabel: 'Нет, соблюдает режим',
-    empathyYes: 'Синий свет экрана задерживает засыпание на 1–2 часа. Расписание Kakai автоматически блокирует телефон в нужное время — ребёнок не сможет его обойти.',
-    empathyNo: 'Хороший режим сна — залог успешной учёбы. Kakai поможет сохранить его даже когда ребёнок подрастёт.',
-  },
-  5: {
-    emoji: '📍',
-    question: 'Беспокоитесь где находится ребёнок когда он не дома?',
-    yesLabel: 'Да, переживаю',
-    noLabel: 'Нет, всегда на связи',
-    empathyYes: 'Это абсолютно нормально. GPS-трекер Kakai показывает местоположение в реальном времени и сохраняет историю маршрута.',
-    empathyNo: 'Приятно слышать! GPS в Kakai всегда под рукой на случай если ребёнок задержится или выключит телефон.',
-  },
-  7: {
-    emoji: '✅',
-    question: 'Хотите мотивировать ребёнка выполнять задания и обязанности?',
-    yesLabel: 'Да, было бы здорово',
-    noLabel: 'Пока не думал об этом',
-    empathyYes: 'В Kakai ребёнок получает дополнительное экранное время за выполненные задания. Это работает — дети сами просят давать им новые задания!',
-    empathyNo: 'Попробуйте — это неожиданно эффективно. Ребёнок сам начинает просить задания в обмен на экранное время.',
-  },
-};
+function Slide12({ t, onSend, onOther, onBack }: { t: T; onSend: () => void; onOther: () => void; onBack: () => void }) {
+  return (
+    <BgImage source={IMAGES.bgLight}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <TouchableOpacity style={s12.backBtn} onPress={onBack} activeOpacity={0.7}>
+          <Text style={s12.backText}>{'\u2190'} {t.back}</Text>
+        </TouchableOpacity>
+
+        <View style={{ flex: 1, justifyContent: 'center', paddingTop: 40 }}>
+          <View style={{ paddingHorizontal: 24 }}>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: DARK, lineHeight: 28 }}>
+              {t.sendLinkTitle}
+            </Text>
+          </View>
+
+          <View style={{ marginTop: 20, marginHorizontal: 20, backgroundColor: '#fff', borderRadius: 16, padding: 16, flexDirection: 'row', gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 }}>
+            <Image source={IMAGES.childIcon} style={{ width: 48, height: 48, borderRadius: 12 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: DARK }}>Kakai Bala by Kakai</Text>
+              <Text style={{ fontSize: 13, color: GRAY, lineHeight: 18, marginTop: 4 }}>{t.sendLinkDesc}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Mascot */}
+        <Image source={IMAGES.mascot} style={{ width: 140, height: 140, position: 'absolute', bottom: 140, right: 10 }} resizeMode="contain" />
+
+        <View style={{ paddingBottom: 8 }}>
+          <GreenBtn label={t.sendLink} onPress={onSend} />
+        </View>
+        <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 16 }} onPress={onOther} activeOpacity={0.7}>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: GREEN }}>{t.otherMethod}</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </BgImage>
+  );
+}
+const s12 = StyleSheet.create({
+  backBtn: { position: 'absolute', top: 54, left: 20, zIndex: 10, padding: 8 },
+  backText: { fontSize: 17, fontWeight: '600', color: GREEN },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════════════════════════════
 
 export default function OnboardingIndex() {
   const router = useRouter();
-  const [step, setStep]       = useState(0);
-  const [answers, setAnswers] = useState<Answers>({});
+  const [i, setI] = useState(0);
+  const [lang, setLang] = useState<Lang>('ru');
+  const [surveySource, setSurveySource] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'parent' | 'child' | null>(null);
 
-  const fadeAnim  = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const t = translations[lang];
+  const go = (n: number) => setI(n);
+  const next = () => setI((p) => Math.min(p + 1, SLIDE_COUNT - 1));
 
-  function animateTo(nextStep: number) {
-    Animated.parallel([
-      Animated.timing(fadeAnim,  { toValue: 0, duration: 130, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: -20, duration: 130, useNativeDriver: true }),
-    ]).start(() => {
-      setStep(nextStep);
-      slideAnim.setValue(20);
-      Animated.parallel([
-        Animated.timing(fadeAnim,  { toValue: 1, duration: 220, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-      ]).start();
-    });
-  }
-
-  function next() {
-    if (step < STEP_COUNT - 1) animateTo(step + 1);
-    else router.replace('/(onboarding)/paywall');
-  }
-
-  function skip() {
-    router.replace('/(onboarding)/paywall');
-  }
-
-  function pickAnswer(stepIdx: number, val: boolean) {
-    setAnswers((prev) => ({ ...prev, [stepIdx]: val }));
-  }
-
-  const progress = step / (STEP_COUNT - 1);
-  const showSkip = step > 0 && step < STEP_COUNT - 1;
-
-  function renderStep() {
-    switch (step) {
-      case 0: return <StepWelcome onNext={next} />;
-
-      case 1:
-      case 3:
-      case 5:
-      case 7: {
-        const d = QUIZ_DATA[step];
-        return (
-          <StepQuiz
-            emoji={d.emoji}
-            question={d.question}
-            yesLabel={d.yesLabel}
-            noLabel={d.noLabel}
-            empathyYes={d.empathyYes}
-            empathyNo={d.empathyNo}
-            answer={answers[step]}
-            onPick={(v) => pickAnswer(step, v)}
-            onNext={next}
-          />
-        );
-      }
-
-      case 2: return <StepFeatureScreenTime onNext={next} />;
-      case 4: return <StepFeatureSchedule onNext={next} />;
-      case 6: return <StepFeatureGps onNext={next} />;
-      case 8: return <StepReviews onNext={next} />;
-      case 9: return <StepLoading onDone={() => router.replace('/(onboarding)/paywall')} />;
-
-      default: return null;
-    }
-  }
+  const showSkip = i >= 1 && i <= 6;
 
   return (
-    <View style={s.container}>
-      {/* Progress header */}
-      <View style={s.header}>
-        <View style={s.progressTrack}>
-          <View style={[s.progressFill, { width: `${progress * 100}%` as any }]} />
-        </View>
-        {showSkip && (
-          <TouchableOpacity onPress={skip} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={s.skipText}>Пропустить</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <StatusBar barStyle="dark-content" />
 
-      {/* Animated step content */}
-      <Animated.View style={[s.stepWrap, { opacity: fadeAnim, transform: [{ translateX: slideAnim }] }]}>
-        {renderStep()}
-      </Animated.View>
+      {showSkip && (
+        <TouchableOpacity style={root.skip} onPress={() => go(7)} activeOpacity={0.7}>
+          <Text style={root.skipText}>{t.skip}</Text>
+        </TouchableOpacity>
+      )}
+
+      {i === 0 && <Slide0 t={t} lang={lang} setLang={setLang} onNext={next} />}
+      {i === 1 && <Slide1 t={t} onNext={next} />}
+      {i === 2 && <Slide2 t={t} onNext={next} />}
+      {i === 3 && <Slide3 t={t} onNext={next} />}
+      {i === 4 && <Slide4 t={t} onNext={next} />}
+      {i === 5 && <Slide5 t={t} onNext={next} />}
+      {i === 6 && <Slide6 t={t} onNext={next} />}
+      {i === 7 && <Slide7 t={t} onSelect={(v) => { setSurveySource(v); next(); }} onSkip={next} />}
+      {i === 8 && <Slide8 t={t} onNext={next} />}
+      {i === 9 && <Slide9 t={t} onAllow={next} onLater={next} />}
+      {i === 10 && <Slide10 t={t} role={selectedRole} setRole={setSelectedRole} onNext={next} />}
+      {i === 11 && <Slide11 t={t} onNext={next} onBack={() => go(10)} />}
+      {i === 12 && <Slide12 t={t} onSend={() => router.replace('/(onboarding)/paywall')} onOther={() => router.replace('/(onboarding)/paywall')} onBack={() => go(11)} />}
     </View>
   );
 }
 
-// ─── Main styles ──────────────────────────────────────────────────────────────
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F4FBF7' },
-
-  header: {
-    paddingTop: 54, paddingHorizontal: 20, paddingBottom: 12,
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-  },
-  progressTrack: {
-    flex: 1, height: 5, backgroundColor: '#C8E8D5',
-    borderRadius: 3, overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: '#0FA968', borderRadius: 3 },
-  skipText: { fontSize: 14, color: '#6B7B6E', fontWeight: '600' },
-
-  stepWrap: { flex: 1 },
-});
-
-// ─── Page-level styles ────────────────────────────────────────────────────────
-
-const p = StyleSheet.create({
-  page: { flex: 1, padding: 24, paddingBottom: 40 },
-
-  // Welcome
-  welcomeLogo:  { fontSize: 72, textAlign: 'center', marginTop: 24, marginBottom: 8 },
-  welcomeTitle: { fontSize: 36, fontWeight: '900', color: '#0FA968', textAlign: 'center', marginBottom: 6 },
-  welcomeSub:   { fontSize: 16, color: '#6B7B6E', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
-  welcomeDots:  { gap: 10, marginBottom: 28 },
-  welcomeDotRow:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  welcomeDotDot:  { width: 8, height: 8, borderRadius: 4, backgroundColor: '#0FA968' },
-  welcomeDotText: { fontSize: 15, fontWeight: '600', color: '#0D1B12' },
-  welcomeHint: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
-
-  // Quiz
-  quizPage:     { flexGrow: 1, padding: 24, paddingBottom: 40 },
-  quizEmoji:    { fontSize: 56, textAlign: 'center', marginBottom: 16 },
-  quizQuestion: { fontSize: 22, fontWeight: '800', color: '#0D1B12', textAlign: 'center', lineHeight: 30, marginBottom: 32 },
-  choices:      { gap: 12, marginBottom: 4 },
-  choice: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: 'white', borderRadius: 16, padding: 18,
-    borderWidth: 2, borderColor: '#E5E7EB',
-  },
-  choiceYes:      { borderColor: '#0FA968', backgroundColor: '#E6F9F0' },
-  choiceNo:       { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
-  choiceUnpicked: { opacity: 0.45 },
-  choiceEmoji:    { fontSize: 24 },
-  choiceText:     { flex: 1, fontSize: 16, fontWeight: '600', color: '#374151' },
-  choiceTextYes:  { color: '#065F46' },
-  choiceTextNo:   { color: '#991B1B' },
-  empathy: { borderRadius: 16, padding: 18, marginTop: 20, marginBottom: 8 },
-  empYes:  { backgroundColor: '#F0FDF4' },
-  empNo:   { backgroundColor: '#F0FDF4' },
-  empText: { fontSize: 15, lineHeight: 22, fontWeight: '500' },
-  empTextYes: { color: '#065F46' },
-  empTextNo:  { color: '#065F46' },
-
-  // Feature (shared)
-  featureHeadEmoji: { fontSize: 52, textAlign: 'center', marginBottom: 12 },
-  featureHead:      { fontSize: 24, fontWeight: '800', color: '#0D1B12', textAlign: 'center', lineHeight: 32, marginBottom: 8 },
-  featureSubhead:   { fontSize: 14, color: '#6B7B6E', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  featureList: { gap: 16, marginBottom: 24 },
-  featureRow:  { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
-  featureIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: '#E6F9F0', justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-  },
-  featureEmoji: { fontSize: 22 },
-  featureTitle: { fontSize: 15, fontWeight: '700', color: '#0D1B12', marginBottom: 2 },
-  featureDesc:  { fontSize: 13, color: '#6B7B6E', lineHeight: 18 },
-
-  // Screen time stat card
-  statCard: {
-    backgroundColor: '#0D1B12', borderRadius: 20, padding: 28,
-    alignItems: 'center', marginBottom: 28,
-  },
-  statBig:   { fontSize: 64, fontWeight: '900', color: '#0FA968', marginBottom: 6 },
-  statLabel: { fontSize: 13, color: '#8BA897', textAlign: 'center', lineHeight: 18 },
-
-  // Schedule
-  schedCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: 'white', borderRadius: 14, padding: 16,
-    marginBottom: 10, borderWidth: 1.5, borderColor: '#E5E7EB',
-  },
-  schedIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-  },
-  schedLabel: { fontSize: 15, fontWeight: '700', color: '#0D1B12', marginBottom: 2 },
-  schedTime:  { fontSize: 16, fontWeight: '800', marginBottom: 2 },
-  schedDays:  { fontSize: 12, color: '#6B7B6E' },
-  schedBadge: {
-    backgroundColor: '#E6F9F0', borderRadius: 12,
-    padding: 14, alignItems: 'center', marginTop: 4, marginBottom: 16,
-  },
-  schedBadgeText: { fontSize: 13, color: '#065F46', fontWeight: '600' },
-
-  // GPS
-  gpsMapWrap: { borderRadius: 16, overflow: 'hidden', marginBottom: 20, position: 'relative' },
-  gpsMapBg: {
-    height: 160, backgroundColor: '#EDF7F2',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  gpsRoad:  { position: 'absolute', backgroundColor: '#FFFFFF' },
-  gpsBlock: { position: 'absolute', backgroundColor: '#C8DDD4', borderRadius: 3 },
-  gpsPinRing: {
-    position: 'absolute',
-    width: 48, height: 48, borderRadius: 24,
-    borderWidth: 2, borderColor: '#0FA96860', backgroundColor: '#0FA96820',
-  },
-  gpsPinDot: {
-    width: 18, height: 18, borderRadius: 9,
-    backgroundColor: '#0FA968', borderWidth: 3, borderColor: 'white',
-    position: 'absolute',
-  },
-  gpsStatusBadge: {
-    position: 'absolute', bottom: 8, left: 8,
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#0D1B12CC', borderRadius: 10,
-    paddingHorizontal: 10, paddingVertical: 6,
-  },
-  gpsOnlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#0FA968' },
-  gpsStatusText: { fontSize: 11, color: 'white', fontWeight: '600' },
-  gpsBulletRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-  gpsBulletDot:  { fontSize: 14, flexShrink: 0 },
-  gpsBulletText: { fontSize: 14, color: '#374151', flex: 1, lineHeight: 20 },
-
-  // Reviews
-  reviewCard: {
-    backgroundColor: 'white', borderRadius: 16, padding: 18,
-    borderWidth: 1, borderColor: '#E5E7EB',
-  },
-  reviewStars:  { fontSize: 14, marginBottom: 8 },
-  reviewText:   { fontSize: 14, color: '#374151', lineHeight: 20, fontStyle: 'italic', marginBottom: 8 },
-  reviewAuthor: { fontSize: 12, color: '#6B7B6E', fontWeight: '600' },
-
-  // Loading
-  loadingPage:     { justifyContent: 'center', alignItems: 'center' },
-  loadingEmoji:    { fontSize: 60, marginBottom: 16 },
-  loadingTitle:    { fontSize: 22, fontWeight: '800', color: '#0D1B12', textAlign: 'center', lineHeight: 30, marginBottom: 32 },
-  loadingBarTrack: {
-    width: '100%', height: 6, backgroundColor: '#C8E8D5',
-    borderRadius: 3, overflow: 'hidden', marginBottom: 32,
-  },
-  loadingBarFill: { height: '100%', backgroundColor: '#0FA968', borderRadius: 3 },
-  loadingItems:   { width: '100%', gap: 16 },
-  loadingRow:     { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  loadingDot: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center',
-  },
-  loadingDotDone:   { backgroundColor: '#0FA968' },
-  loadingDotActive: { backgroundColor: '#FEF3C7' },
-  loadingDotText:   { fontSize: 13, fontWeight: '700', color: 'white' },
-  loadingItemText:  { fontSize: 15, color: '#6B7B6E', flex: 1 },
-  loadingItemDone:  { color: '#0D1B12', fontWeight: '600' },
+const root = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: BG },
+  skip: { position: 'absolute', top: 54, right: 20, zIndex: 10, paddingVertical: 6, paddingHorizontal: 14, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 16 },
+  skipText: { fontSize: 15, fontWeight: '600', color: GRAY },
 });

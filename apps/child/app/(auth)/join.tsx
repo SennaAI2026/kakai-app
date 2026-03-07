@@ -13,11 +13,12 @@ export default function JoinScreen() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('register');
   const [inviteCode, setInviteCode] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
-    if (!inviteCode || !password) {
+    if (!inviteCode || !email || !password) {
       Alert.alert(t('common.error'), t('auth.errors.emailRequired'));
       return;
     }
@@ -35,8 +36,7 @@ export default function JoinScreen() {
       return;
     }
 
-    const email = inviteCode.toLowerCase() + '@kakai.kz';
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
     if (error) {
       Alert.alert(t('common.error'), t('auth.errors.invalidCredentials'));
@@ -47,7 +47,7 @@ export default function JoinScreen() {
   }
 
   async function handleRegister() {
-    if (!inviteCode || !password) {
+    if (!inviteCode || !email || !password) {
       Alert.alert(t('common.error'), t('auth.errors.emailRequired'));
       return;
     }
@@ -65,10 +65,7 @@ export default function JoinScreen() {
       return;
     }
 
-    const suffix = Math.random().toString(36).substring(2, 7);
-    const email = inviteCode.toLowerCase() + suffix + '@kakai.kz';
-
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+    const { data: authData, error: authError } = await supabase.auth.signUp({ email: email.trim(), password });
 
     if (authError || !authData.user) {
       Alert.alert(t('common.error'), authError?.message ?? t('auth.errors.unknown'));
@@ -119,6 +116,16 @@ export default function JoinScreen() {
         onChangeText={setInviteCode}
         autoCapitalize="characters"
         maxLength={6}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder={t('auth.emailPlaceholder')}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
       />
 
       <TextInput

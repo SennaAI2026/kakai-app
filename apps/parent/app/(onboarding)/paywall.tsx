@@ -4,6 +4,7 @@ import {
   ScrollView, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Plan = 'yearly' | 'monthly';
 
@@ -34,18 +35,25 @@ export default function PaywallScreen() {
   const [plan, setPlan]     = useState<Plan>('yearly');
   const [loading, setLoading] = useState(false);
 
+  async function completeOnboarding() {
+    await AsyncStorage.setItem('onboarding_complete', 'true');
+  }
+
   function handleSubscribe() {
     if (loading) return;
     setLoading(true);
     // Phase 2: integrate RevenueCat / Google Play / App Store
-    setTimeout(() => {
+    setTimeout(async () => {
+      await completeOnboarding();
       setLoading(false);
-      router.replace('/(main)/dashboard');
+      router.replace('/(auth)/login');
     }, 600);
   }
 
   function handleFree() {
-    router.replace('/(main)/dashboard');
+    completeOnboarding().then(() => {
+      router.replace('/(auth)/login');
+    });
   }
 
   function handleRestore() {

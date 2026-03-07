@@ -43,7 +43,6 @@ export type Family = {
   id: string;
   name: string;
   invite_code: string;
-  owner_id: string;
   parent_id: string | null;
   child_id: string | null;
   parent_pin: string | null;
@@ -148,7 +147,7 @@ export type Database = {
       };
       families: {
         Row: Family;
-        Insert: Pick<Family, 'name' | 'invite_code' | 'owner_id'> & Partial<Omit<Family, 'name' | 'invite_code' | 'owner_id'>>;
+        Insert: Pick<Family, 'name' | 'invite_code'> & Partial<Omit<Family, 'name' | 'invite_code'>>;
         Update: Partial<Omit<Family, 'id'>>;
         Relationships: [];
       };

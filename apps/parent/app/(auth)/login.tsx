@@ -9,19 +9,18 @@ import { t } from '@kakai/i18n';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
-    if (!phone || !password) {
+    if (!email || !password) {
       Alert.alert(t('common.error'), t('auth.errors.emailRequired'));
       return;
     }
     setLoading(true);
 
-    const email = phone.replace(/\D/g, '') + '@kakai.kz';
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
     if (error) {
       Alert.alert(t('common.error'), t('auth.errors.invalidCredentials'));
@@ -41,11 +40,12 @@ export default function LoginScreen() {
 
       <TextInput
         style={styles.input}
-        placeholder="7 XXX XXX XX XX"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-        autoComplete="tel"
+        placeholder={t('auth.emailPlaceholder')}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
       />
       <TextInput
         style={styles.input}

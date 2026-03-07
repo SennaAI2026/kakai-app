@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@kakai/api';
 
 export default function Index() {
@@ -8,6 +9,16 @@ export default function Index() {
 
   useEffect(() => {
     async function bootstrap() {
+      // 1. Check onboarding
+      // TODO: временно для тестирования — всегда показываем онбординг
+      await AsyncStorage.removeItem('onboarding_complete');
+      const onboardingDone = null;
+      if (onboardingDone !== 'true') {
+        router.replace('/(onboarding)');
+        return;
+      }
+
+      // 2. Check auth
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
@@ -15,6 +26,7 @@ export default function Index() {
         return;
       }
 
+      // 3. Check family
       const { data: user } = await supabase
         .from('users')
         .select('family_id')
@@ -22,7 +34,6 @@ export default function Index() {
         .maybeSingle();
 
       if (!user?.family_id) {
-        // No family yet → go to register to create one
         router.replace('/(auth)/register');
       } else {
         router.replace('/(main)/dashboard');

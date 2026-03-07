@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx expo:*)",
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(npx expo-modules-autolinking:*)",
+      "Bash(npx eas:*)",
+      "Bash(cd:*)",
+      "Bash(npm ls:*)",
+      "WebFetch(domain:expo.dev)",
+      "WebFetch(domain:job-logs.eascdn.net)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(npx eas-cli:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(npx supabase:*)",
+      "Bash(curl:*)",
+      "Bash(head:*)",
+      "Bash(mv:*)"
+    ]
+  }
+}
