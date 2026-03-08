@@ -13,5 +13,9 @@
     "child:android": "cd apps/child && npx expo start --android",
     "parent:web": "cd apps/parent && npx expo start --web",
     "child:web": "cd apps/child && npx expo start --web"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "typescript": "^5.3.3"
   }
 }

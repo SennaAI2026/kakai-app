@@ -14,7 +14,8 @@ const GRAY = '#6B7280';
 const LIGHT_GRAY = '#E5E7EB';
 const YELLOW = '#FEF3C7';
 const DOT_COUNT = 7;
-const SLIDE_COUNT = 13;
+const SLIDE_COUNT = 14;
+const IMG_BG = '#D5D8DC';
 
 const IMAGES = {
   mascot: require('../../assets/giraffe_10_mascot.png'),
@@ -31,31 +32,24 @@ const IMAGES = {
   parentIcon: require('../../assets/parent-icon-512.png'),
   childIcon: require('../../assets/child-icon-512.png'),
   bgLight: require('../../assets/bg_light.png'),
+  mascotClean: require('../../assets/giraffe_mascot_clean.png'),
 };
 
-// ─── Translations ───────────────────────────────────────────────────────────
+// --- Translations ---
 
 const translations = {
   kz: {
-    // 0
     welcomeTitle: 'Баланың телефонына\nшектеу қойыңыз',
     welcomeSub: '«kakai» — аналар мен әкелер бала зиянды нәрсеге қол созғанда айтады. Телефон — да солай.',
-    // 1
     blockTitle: 'Қосымшаларға кіруді\nбір басумен бұғаттаңыз',
-    // 2
     sleepTitle: 'Ұйқы мен оқу уақытында\nқосымшаларға кіруді шектеңіз',
-    // 3
     youtubeTitle: 'Сайттар мен YouTube\nкіруді бақылаңыз',
-    // 4
     limitTitle: 'Күнделікті уақыт шегін\nойын-сауық үшін белгілеңіз',
-    // 5
     tasksTitle: 'Күнделікті лимитті пайдалы\nтапсырмалар орындау арқылы\nарттырыңыз',
-    // 6
     gpsTitle: 'Бала мектептен шыққанда\nавтоматты хабарлама алыңыз',
     gpsNotif: 'Бала мектептен шықты',
     start: 'Бастау',
     skip: 'Өткізу',
-    // 7
     surveyBubble: 'Біз туралы қайдан білдіңіз?',
     surveyOpt1: 'YouTube немесе онлайн-видео',
     surveyOpt2: 'Достар немесе отбасы ұсынысы',
@@ -64,31 +58,29 @@ const translations = {
     surveyOpt5: 'App Store / Google Play',
     surveyOpt6: 'Блогер немесе ата-ана форумы',
     surveyOpt7: 'Басқа',
-    // 8
     ratingTitle: 'Бағалағаныңыз үшін\nрахмет',
     continue: 'Жалғастыру',
-    // 9
-    pushTitle: 'Хабарламаларды қосыңыз,\nбаладан хабардар болу үшін',
-    allow: 'Рұқсат ету',
+    pushTitle: 'Хабарламаларды қосыңыз,\nмаңызды ақпаратты\nжіберіп алмау үшін',
+    allow: 'Қосу',
     later: 'Кейінірек',
-    // 10
     roleTitle: 'Бұл құрылғыны кім пайдаланады?',
     parent: 'Ата-ана',
     parentSub: 'Бұл менің телефоным',
     child: 'Бала',
     childSub: 'Бұл баланың телефоны',
-    // 11
     back: 'Артқа',
     kakaiParent: 'Ата-ана үшін',
     kakaiBala: 'Бала үшін',
     stepDone: 'Kakai ата-ана телефонына орнатылды',
     stepNext: 'Баланың телефонын баптайық',
     setupChild: 'Баланың телефонын баптау',
-    // 12
     sendLinkTitle: 'Баланың телефонын баптау үшін, оған Kakai Bala қосымшасына сілтеме жіберіңіз',
     sendLinkDesc: 'Kakai Bala қосымшасы баланың деректерін ата-ана қосымшасы Kakai-ге жібереді',
     sendLink: 'Балаға сілтеме жіберу',
     otherMethod: 'Басқа тәсіл',
+    waitingTitle: 'Баланың телефонында жіберілген сілтемеге өтіңіз, Kakai Бала қосымшасын орнатыңыз және кодты енгізіңіз:',
+    waitingHint: 'Бұл код Kakai Бала қосымшасын сіздің Kakai қосымшаңызбен байланыстырады!',
+    needHelp: 'Маған көмек керек',
   },
   ru: {
     welcomeTitle: 'Установите лимиты\nдля телефона ребёнка',
@@ -112,9 +104,9 @@ const translations = {
     surveyOpt7: 'Другое',
     ratingTitle: 'Спасибо за вашу\nоценку',
     continue: 'Продолжить',
-    pushTitle: 'Разрешите уведомления\nчтобы быть в курсе',
-    allow: 'Разрешить',
-    later: 'Позже',
+    pushTitle: 'Включите уведомления\nчтобы не пропустить\nважное',
+    allow: 'Включить',
+    later: 'Не сейчас',
     roleTitle: 'Кто будет пользоваться этим устройством?',
     parent: 'Родитель',
     parentSub: 'Это мой телефон',
@@ -130,6 +122,9 @@ const translations = {
     sendLinkDesc: 'Приложение Kakai Bala отправляет данные ребёнка на родительское приложение Kakai',
     sendLink: 'Отправить ссылку ребёнку',
     otherMethod: 'Другой способ',
+    waitingTitle: 'На телефоне ребёнка перейдите по отправленной ссылке, установите приложение Kakai Бала и введите в нём код:',
+    waitingHint: 'Этот код свяжет приложение Kakai Бала с вашим родительским приложением Kakai и всё заработает!',
+    needHelp: 'Мне нужна помощь',
   },
   en: {
     welcomeTitle: 'Set limits for\nyour child\'s phone',
@@ -153,9 +148,9 @@ const translations = {
     surveyOpt7: 'Other',
     ratingTitle: 'Thank you for\nyour rating',
     continue: 'Continue',
-    pushTitle: 'Enable notifications\nto stay informed',
-    allow: 'Allow',
-    later: 'Later',
+    pushTitle: 'Enable notifications\nso you don\'t miss\nanything important',
+    allow: 'Enable',
+    later: 'Not now',
     roleTitle: 'Who will be using this device?',
     parent: 'Parent',
     parentSub: 'This is my phone',
@@ -171,6 +166,9 @@ const translations = {
     sendLinkDesc: 'The Kakai Bala app sends the child\'s data to the parent Kakai app',
     sendLink: 'Send link to child',
     otherMethod: 'Other method',
+    waitingTitle: 'On the child\'s phone, follow the link, install Kakai Bala app and enter this code:',
+    waitingHint: 'This code will link the Kakai Bala app with your parent Kakai app and everything will work!',
+    needHelp: 'I need help',
   },
 };
 
@@ -183,9 +181,8 @@ const LANGS: { key: Lang; label: string }[] = [
   { key: 'en', label: 'EN Eng' },
 ];
 
-// ─── Reusable Components ────────────────────────────────────────────────────
+// --- Reusable Components ---
 
-/** Full-screen background image (works on web + native) */
 function BgImage({ source, resizeMode = 'cover', bgColor, children }: {
   source: any;
   resizeMode?: 'cover' | 'contain';
@@ -281,146 +278,70 @@ const bb = StyleSheet.create({
   text: { fontSize: 15, fontWeight: '600', color: DARK },
 });
 
-const overlay = StyleSheet.create({
-  textBox: { backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 16, padding: 16, marginHorizontal: 20 },
-  title: { fontSize: 26, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 34 },
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 0 — Welcome
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 0 - Welcome (contain image + white card bottom) ---
 
 function Slide0({ t, lang, setLang, onNext }: { t: T; lang: Lang; setLang: (l: Lang) => void; onNext: () => void }) {
   return (
-    <BgImage source={IMAGES.welcome}>
+    <TouchableOpacity style={{ flex: 1, backgroundColor: IMG_BG }} activeOpacity={1} onPress={onNext}>
       <View style={{ position: 'absolute', top: 50, alignSelf: 'center', zIndex: 10 }}>
         <LangPicker lang={lang} onChange={setLang} />
       </View>
 
-      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
-        <Card>
-          <Text style={{ fontSize: 26, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 34 }}>
-            {t.welcomeTitle}
-          </Text>
-          <Text style={{ fontSize: 15, color: GRAY, textAlign: 'center', lineHeight: 22, marginTop: 10 }}>
-            {t.welcomeSub}
-          </Text>
-        </Card>
+      <View style={{ flex: 3, justifyContent: 'center', alignItems: 'center' }}>
+        <Image source={IMAGES.welcome} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+      </View>
 
+      <View style={slide.bottomCard}>
+        <Text style={slide.title}>{t.welcomeTitle}</Text>
+        <Text style={{ fontSize: 14, color: GRAY, textAlign: 'center', lineHeight: 20, marginTop: 8 }}>
+          {t.welcomeSub}
+        </Text>
         <Dots count={DOT_COUNT} active={0} />
-      </TouchableOpacity>
-    </BgImage>
+      </View>
+    </TouchableOpacity>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 1 — Block Apps
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDES 1-5 - Feature slides (contain image + white card bottom) ---
 
-function Slide1({ t, onNext }: { t: T; onNext: () => void }) {
+function FeatureSlide({ t, imageSource, title, dotIndex, onNext, bgColor }: {
+  t: T; imageSource: any; title: string; dotIndex: number; onNext: () => void; bgColor?: string;
+}) {
   return (
-    <BgImage source={IMAGES.block}>
-      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
-        <View style={overlay.textBox}>
-          <Text style={overlay.title}>{t.blockTitle}</Text>
-        </View>
-        <Dots count={DOT_COUNT} active={1} />
-      </TouchableOpacity>
-    </BgImage>
+    <TouchableOpacity style={{ flex: 1, backgroundColor: bgColor || IMG_BG }} activeOpacity={1} onPress={onNext}>
+      <View style={{ flex: 3, justifyContent: 'center', alignItems: 'center' }}>
+        <Image source={imageSource} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+      </View>
+
+      <View style={slide.bottomCard}>
+        <Text style={slide.title}>{title}</Text>
+        <Dots count={DOT_COUNT} active={dotIndex} />
+      </View>
+    </TouchableOpacity>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 2 — Sleep
-// ═══════════════════════════════════════════════════════════════════════════
-
-function Slide2({ t, onNext }: { t: T; onNext: () => void }) {
-  return (
-    <BgImage source={IMAGES.sleep}>
-      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
-        <View style={overlay.textBox}>
-          <Text style={overlay.title}>{t.sleepTitle}</Text>
-        </View>
-        <Dots count={DOT_COUNT} active={2} />
-      </TouchableOpacity>
-    </BgImage>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 3 — YouTube / Sites
-// ═══════════════════════════════════════════════════════════════════════════
-
-function Slide3({ t, onNext }: { t: T; onNext: () => void }) {
-  return (
-    <BgImage source={IMAGES.youtube} bgColor="#C8CCD0">
-      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
-        <View style={overlay.textBox}>
-          <Text style={overlay.title}>{t.youtubeTitle}</Text>
-        </View>
-        <Dots count={DOT_COUNT} active={3} />
-      </TouchableOpacity>
-    </BgImage>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 4 — Daily Limit
-// ═══════════════════════════════════════════════════════════════════════════
-
-function Slide4({ t, onNext }: { t: T; onNext: () => void }) {
-  return (
-    <BgImage source={IMAGES.limit}>
-      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
-        <View style={overlay.textBox}>
-          <Text style={overlay.title}>{t.limitTitle}</Text>
-        </View>
-        <Dots count={DOT_COUNT} active={4} />
-      </TouchableOpacity>
-    </BgImage>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 5 — Tasks
-// ═══════════════════════════════════════════════════════════════════════════
-
-function Slide5({ t, onNext }: { t: T; onNext: () => void }) {
-  return (
-    <BgImage source={IMAGES.tasks}>
-      <TouchableOpacity style={{ flex: 1, justifyContent: 'flex-end' }} activeOpacity={1} onPress={onNext}>
-        <View style={overlay.textBox}>
-          <Text style={overlay.title}>{t.tasksTitle}</Text>
-        </View>
-        <Dots count={DOT_COUNT} active={5} />
-      </TouchableOpacity>
-    </BgImage>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 6 — GPS
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 6 - GPS (contain image + white card + green button) ---
 
 function Slide6({ t, onNext }: { t: T; onNext: () => void }) {
   return (
-    <BgImage source={IMAGES.gps}>
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <View style={overlay.textBox}>
-          <Text style={overlay.title}>{t.gpsTitle}</Text>
-        </View>
-        <View style={{ paddingTop: 16, paddingBottom: 8 }}>
+    <View style={{ flex: 1, backgroundColor: IMG_BG }}>
+      <View style={{ flex: 3, justifyContent: 'center', alignItems: 'center' }}>
+        <Image source={IMAGES.gps} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+      </View>
+
+      <View style={slide.bottomCard}>
+        <Text style={slide.title}>{t.gpsTitle}</Text>
+        <View style={{ paddingTop: 12 }}>
           <GreenBtn label={t.start} onPress={onNext} />
         </View>
         <Dots count={DOT_COUNT} active={6} />
       </View>
-    </BgImage>
+    </View>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 7 — Survey
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 7 - Survey (no mascot, just bubble + options) ---
 
 function Slide7({ t, onSelect, onSkip }: { t: T; onSelect: (v: string) => void; onSkip: () => void }) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -441,12 +362,11 @@ function Slide7({ t, onSelect, onSkip }: { t: T; onSelect: (v: string) => void; 
         </TouchableOpacity>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          <View style={{ alignItems: 'center', paddingTop: 8 }}>
-            <Image source={IMAGES.mascot} style={{ width: 120, height: 120 }} resizeMode="contain" />
+          <View style={{ alignItems: 'center', paddingTop: 32 }}>
             <Bubble text={t.surveyBubble} />
           </View>
 
-          <View style={{ gap: 8, paddingHorizontal: 20, marginTop: 12 }}>
+          <View style={{ gap: 8, paddingHorizontal: 20, marginTop: 16 }}>
             {options.map((opt, i) => (
               <TouchableOpacity
                 key={i}
@@ -471,9 +391,7 @@ const s7 = StyleSheet.create({
   optionText: { fontSize: 16, fontWeight: '600', color: DARK },
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 8 — Rating
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 8 - Rating (unchanged - looks good) ---
 
 function Slide8({ t, onNext }: { t: T; onNext: () => void }) {
   return (
@@ -492,19 +410,21 @@ function Slide8({ t, onNext }: { t: T; onNext: () => void }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 9 — Push
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 9 - Push (pre-screen only, real permission in dev build later) ---
 
 function Slide9({ t, onAllow, onLater }: { t: T; onAllow: () => void; onLater: () => void }) {
   return (
     <BgImage source={IMAGES.bgLight}>
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Image source={IMAGES.mascot} style={{ width: 220, height: 220, alignSelf: 'center' }} resizeMode="contain" />
-        <Text style={{ fontSize: 22, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 30, paddingHorizontal: 24, marginTop: 24 }}>
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
+        <View style={{ width: 100, height: 100, borderRadius: 28, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4 }}>
+          <Text style={{ fontSize: 48 }}>🔔</Text>
+        </View>
+
+        <Text style={{ fontSize: 22, fontWeight: '800', color: DARK, textAlign: 'center', lineHeight: 30, marginTop: 28 }}>
           {t.pushTitle}
         </Text>
-        <View style={{ width: '100%', marginTop: 32, gap: 12 }}>
+
+        <View style={{ width: '100%', marginTop: 40, gap: 12 }}>
           <GreenBtn label={t.allow} onPress={onAllow} />
           <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 12 }} onPress={onLater} activeOpacity={0.7}>
             <Text style={{ fontSize: 16, fontWeight: '600', color: GRAY }}>{t.later}</Text>
@@ -515,9 +435,7 @@ function Slide9({ t, onAllow, onLater }: { t: T; onAllow: () => void; onLater: (
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 10 — Role Selection
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 10 - Role Selection (unchanged - looks good) ---
 
 function Slide10({ t, role, setRole, onNext }: { t: T; role: 'parent' | 'child' | null; setRole: (r: 'parent' | 'child') => void; onNext: () => void }) {
   function RoleCard({ value, label, sub }: { value: 'parent' | 'child'; label: string; sub: string }) {
@@ -549,14 +467,11 @@ function Slide10({ t, role, setRole, onNext }: { t: T; role: 'parent' | 'child' 
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={{ flex: 1 }}>
         <Text style={s10.heading}>{t.roleTitle}</Text>
-
         <View style={{ gap: 12, paddingHorizontal: 20, marginTop: 20 }}>
           <RoleCard value="parent" label={t.parent} sub={t.parentSub} />
           <RoleCard value="child" label={t.child} sub={t.childSub} />
         </View>
-
         <View style={{ flex: 1 }} />
-
         <View style={{ paddingBottom: 24 }}>
           <GreenBtn label={t.continue} onPress={onNext} disabled={role === null} />
         </View>
@@ -575,9 +490,7 @@ const s10 = StyleSheet.create({
   cardSub: { fontSize: 14, color: GRAY, marginTop: 2 },
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 11 — Stepper
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 11 - Stepper (no mascot) ---
 
 function Slide11({ t, onNext, onBack }: { t: T; onNext: () => void; onBack: () => void }) {
   return (
@@ -589,7 +502,6 @@ function Slide11({ t, onNext, onBack }: { t: T; onNext: () => void; onBack: () =
 
         <View style={{ flex: 1, justifyContent: 'center', paddingTop: 40 }}>
           <Card style={{ gap: 24 }}>
-            {/* App icons */}
             <View style={s11.appsRow}>
               <View style={s11.appCol}>
                 <Image source={IMAGES.parentIcon} style={{ width: 72, height: 72, borderRadius: 18 }} />
@@ -604,7 +516,6 @@ function Slide11({ t, onNext, onBack }: { t: T; onNext: () => void; onBack: () =
               </View>
             </View>
 
-            {/* Stepper */}
             <View>
               <View style={s11.stepRow}>
                 <View style={s11.stepDone}>
@@ -620,9 +531,6 @@ function Slide11({ t, onNext, onBack }: { t: T; onNext: () => void; onBack: () =
             </View>
           </Card>
         </View>
-
-        {/* Mascot */}
-        <Image source={IMAGES.mascot} style={{ width: 140, height: 140, position: 'absolute', bottom: 100, right: 20 }} resizeMode="contain" />
 
         <View style={{ paddingBottom: 24 }}>
           <GreenBtn label={t.setupChild} onPress={onNext} />
@@ -646,9 +554,7 @@ const s11 = StyleSheet.create({
   stepText: { fontSize: 15, fontWeight: '600', color: DARK, flex: 1 },
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 12 — Send Link
-// ═══════════════════════════════════════════════════════════════════════════
+// --- SLIDE 12 - Send Link (no mascot) ---
 
 function Slide12({ t, onSend, onOther, onBack }: { t: T; onSend: () => void; onOther: () => void; onBack: () => void }) {
   return (
@@ -674,9 +580,6 @@ function Slide12({ t, onSend, onOther, onBack }: { t: T; onSend: () => void; onO
           </View>
         </View>
 
-        {/* Mascot */}
-        <Image source={IMAGES.mascot} style={{ width: 140, height: 140, position: 'absolute', bottom: 140, right: 10 }} resizeMode="contain" />
-
         <View style={{ paddingBottom: 8 }}>
           <GreenBtn label={t.sendLink} onPress={onSend} />
         </View>
@@ -692,9 +595,60 @@ const s12 = StyleSheet.create({
   backText: { fontSize: 17, fontWeight: '600', color: GREEN },
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN
-// ═══════════════════════════════════════════════════════════════════════════
+// --- Shared styles for slides 0-6 ---
+
+const slide = StyleSheet.create({
+  bottomCard: {
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: DARK,
+    textAlign: 'center',
+    lineHeight: 32,
+  },
+});
+
+// --- SLIDE 13 - Waiting for child (invite code) ---
+
+function Slide13({ t, onBack, onHelp }: { t: T; onBack: () => void; onHelp: () => void }) {
+  const inviteCode = '000-000';
+  return (
+    <BgImage source={IMAGES.bgLight}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <TouchableOpacity style={{ position: 'absolute', top: 54, left: 20, zIndex: 10, padding: 8 }} onPress={onBack} activeOpacity={0.7}>
+          <Text style={{ fontSize: 17, fontWeight: '600', color: GREEN }}>{'\u2190'} {t.back}</Text>
+        </TouchableOpacity>
+        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 20 }}>
+          <Card>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: DARK, textAlign: 'center', lineHeight: 26 }}>
+              {t.waitingTitle}
+            </Text>
+            <View style={{ backgroundColor: '#F3F4F6', borderRadius: 16, paddingVertical: 20, marginTop: 20, alignItems: 'center' }}>
+              <Text style={{ fontSize: 36, fontWeight: '900', color: GREEN, letterSpacing: 4 }}>
+                {inviteCode}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 14, color: GRAY, textAlign: 'center', lineHeight: 20, marginTop: 16 }}>
+              {t.waitingHint}
+            </Text>
+          </Card>
+        </View>
+        <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 20 }} onPress={onHelp} activeOpacity={0.7}>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: GRAY }}>{t.needHelp}</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </BgImage>
+  );
+}
+
+// --- MAIN ---
 
 export default function OnboardingIndex() {
   const router = useRouter();
@@ -707,7 +661,7 @@ export default function OnboardingIndex() {
   const go = (n: number) => setI(n);
   const next = () => setI((p) => Math.min(p + 1, SLIDE_COUNT - 1));
 
-  const showSkip = i >= 1 && i <= 6;
+  const showSkip = i >= 1 && i <= 5;
 
   return (
     <View style={{ flex: 1, backgroundColor: BG }}>
@@ -720,18 +674,19 @@ export default function OnboardingIndex() {
       )}
 
       {i === 0 && <Slide0 t={t} lang={lang} setLang={setLang} onNext={next} />}
-      {i === 1 && <Slide1 t={t} onNext={next} />}
-      {i === 2 && <Slide2 t={t} onNext={next} />}
-      {i === 3 && <Slide3 t={t} onNext={next} />}
-      {i === 4 && <Slide4 t={t} onNext={next} />}
-      {i === 5 && <Slide5 t={t} onNext={next} />}
+      {i === 1 && <FeatureSlide t={t} imageSource={IMAGES.block} title={t.blockTitle} dotIndex={1} onNext={next} />}
+      {i === 2 && <FeatureSlide t={t} imageSource={IMAGES.sleep} title={t.sleepTitle} dotIndex={2} onNext={next} />}
+      {i === 3 && <FeatureSlide t={t} imageSource={IMAGES.youtube} title={t.youtubeTitle} dotIndex={3} onNext={next} />}
+      {i === 4 && <FeatureSlide t={t} imageSource={IMAGES.limit} title={t.limitTitle} dotIndex={4} onNext={next} />}
+      {i === 5 && <FeatureSlide t={t} imageSource={IMAGES.tasks} title={t.tasksTitle} dotIndex={5} onNext={next} />}
       {i === 6 && <Slide6 t={t} onNext={next} />}
       {i === 7 && <Slide7 t={t} onSelect={(v) => { setSurveySource(v); next(); }} onSkip={next} />}
       {i === 8 && <Slide8 t={t} onNext={next} />}
       {i === 9 && <Slide9 t={t} onAllow={next} onLater={next} />}
       {i === 10 && <Slide10 t={t} role={selectedRole} setRole={setSelectedRole} onNext={next} />}
       {i === 11 && <Slide11 t={t} onNext={next} onBack={() => go(10)} />}
-      {i === 12 && <Slide12 t={t} onSend={() => router.replace('/(onboarding)/paywall')} onOther={() => router.replace('/(onboarding)/paywall')} onBack={() => go(11)} />}
+      {i === 12 && <Slide12 t={t} onSend={() => go(13)} onOther={() => go(13)} onBack={() => go(11)} />}
+      {i === 13 && <Slide13 t={t} onBack={() => go(12)} onHelp={() => router.replace('/(onboarding)/paywall')} />}
     </View>
   );
 }
