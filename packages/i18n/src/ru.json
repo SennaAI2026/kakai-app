@@ -54,7 +54,10 @@
     "inviteCodePlaceholder": "XXXXXX",
     "inviteCodeInvalid": "Неверный код приглашения",
     "joinFamily": "Присоединиться к семье",
+    "inviteCodeHint": "Попросите код у родителя из приложения Kakai",
+    "loginHint": "Для тех, кто уже привязал email в настройках",
     "errors": {
+      "nameRequired": "Введите имя",
       "emailRequired": "Введите email",
       "emailInvalid": "Неверный формат email",
       "passwordRequired": "Введите пароль",

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
+  Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -37,6 +37,7 @@ export default function LoginScreen() {
     >
       <Text style={styles.title}>{t('common.appName')}</Text>
       <Text style={styles.subtitle}>{t('auth.signIn')}</Text>
+      <Text style={styles.hint}>{t('auth.loginHint')}</Text>
 
       <TextInput
         style={styles.input}
@@ -69,9 +70,9 @@ export default function LoginScreen() {
 
       <TouchableOpacity
         style={styles.link}
-        onPress={() => router.push('/(auth)/register')}
+        onPress={() => router.back()}
       >
-        <Text style={styles.linkText}>{t('auth.noAccount')}</Text>
+        <Text style={styles.linkText}>{t('common.back')}</Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
   );
@@ -80,7 +81,8 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#F4FBF7' },
   title: { fontSize: 36, fontWeight: '800', color: '#0FA968', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#6B7B6E', textAlign: 'center', marginBottom: 40 },
+  subtitle: { fontSize: 16, color: '#6B7B6E', textAlign: 'center', marginBottom: 8 },
+  hint: { fontSize: 13, color: '#9BA8A0', textAlign: 'center', marginBottom: 32 },
   input: {
     backgroundColor: 'white', borderRadius: 12, padding: 16,
     fontSize: 16, marginBottom: 16, borderWidth: 1, borderColor: '#C8E8D5',

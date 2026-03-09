@@ -1,62 +1,30 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
+  Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@kakai/api';
 import { t } from '@kakai/i18n';
 
-type Mode = 'login' | 'register';
-
 export default function JoinScreen() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('register');
   const [inviteCode, setInviteCode] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin() {
-    if (!inviteCode || !email || !password) {
-      Alert.alert(t('common.error'), t('auth.errors.emailRequired'));
-      return;
-    }
-    setLoading(true);
-
-    const { data: family } = await supabase
-      .from('families')
-      .select('id')
-      .eq('invite_code', inviteCode.toUpperCase())
-      .maybeSingle();
-
-    if (!family) {
+  async function handleJoin() {
+    const code = inviteCode.trim().toUpperCase();
+    if (code.length !== 6) {
       Alert.alert(t('common.error'), t('auth.inviteCodeInvalid'));
-      setLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-
-    if (error) {
-      Alert.alert(t('common.error'), t('auth.errors.invalidCredentials'));
-    } else {
-      router.replace('/(main)/home');
-    }
-    setLoading(false);
-  }
-
-  async function handleRegister() {
-    if (!inviteCode || !email || !password) {
-      Alert.alert(t('common.error'), t('auth.errors.emailRequired'));
       return;
     }
     setLoading(true);
 
+    // 1. Validate invite code
     const { data: family, error: familyError } = await supabase
       .from('families')
       .select('id, name')
-      .eq('invite_code', inviteCode.toUpperCase())
+      .eq('invite_code', code)
       .maybeSingle();
 
     if (familyError || !family) {
@@ -65,7 +33,8 @@ export default function JoinScreen() {
       return;
     }
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email: email.trim(), password });
+    // 2. Anonymous Auth — no email/password
+    const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
 
     if (authError || !authData.user) {
       Alert.alert(t('common.error'), authError?.message ?? t('auth.errors.unknown'));
@@ -73,11 +42,12 @@ export default function JoinScreen() {
       return;
     }
 
+    // 3. Create child user record linked to family
     const { error: userError } = await supabase.from('users').insert({
       id: authData.user.id,
       family_id: family.id,
       role: 'child',
-      name: '',        // will be set in setup
+      name: '',
       lang: 'ru',
     });
 
@@ -87,6 +57,7 @@ export default function JoinScreen() {
       return;
     }
 
+    // 4. Initialize screen_time for child
     await supabase.from('screen_time').insert({
       child_id: authData.user.id,
       balance_minutes: 0,
@@ -96,8 +67,6 @@ export default function JoinScreen() {
     setLoading(false);
   }
 
-  const isLogin = mode === 'login';
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -105,9 +74,8 @@ export default function JoinScreen() {
     >
       <Text style={styles.emoji}>👧</Text>
       <Text style={styles.title}>{t('common.appName')}</Text>
-      <Text style={styles.subtitle}>
-        {isLogin ? t('auth.signIn') : t('auth.inviteCode')}
-      </Text>
+      <Text style={styles.subtitle}>{t('auth.inviteCode')}</Text>
+      <Text style={styles.hint}>{t('auth.inviteCodeHint')}</Text>
 
       <TextInput
         style={styles.codeInput}
@@ -118,41 +86,14 @@ export default function JoinScreen() {
         maxLength={6}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder={t('auth.emailPlaceholder')}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoComplete="email"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder={t('auth.passwordPlaceholder')}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
       <TouchableOpacity
-        style={styles.button}
-        onPress={isLogin ? handleLogin : handleRegister}
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleJoin}
         disabled={loading}
         activeOpacity={0.8}
       >
         <Text style={styles.buttonText}>
-          {loading ? t('common.loading') : isLogin ? t('auth.signIn') : t('auth.joinFamily')}
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.link}
-        onPress={() => setMode(isLogin ? 'register' : 'login')}
-      >
-        <Text style={styles.linkText}>
-          {isLogin ? t('auth.noAccount') : t('auth.alreadyHaveAccount')}
+          {loading ? t('common.loading') : t('auth.joinFamily')}
         </Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
@@ -163,18 +104,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#FFF8E6' },
   emoji: { fontSize: 64, textAlign: 'center', marginBottom: 8 },
   title: { fontSize: 36, fontWeight: '800', color: '#0FA968', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#6B7B6E', textAlign: 'center', marginBottom: 32 },
+  subtitle: { fontSize: 16, color: '#6B7B6E', textAlign: 'center', marginBottom: 8 },
+  hint: { fontSize: 13, color: '#9BA8A0', textAlign: 'center', marginBottom: 32 },
   codeInput: {
     backgroundColor: 'white', borderRadius: 12, padding: 18,
     fontSize: 24, fontWeight: '800', marginBottom: 16,
     borderWidth: 2, borderColor: '#FFD23F', textAlign: 'center', letterSpacing: 6,
   },
-  input: {
-    backgroundColor: 'white', borderRadius: 12, padding: 16,
-    fontSize: 16, marginBottom: 16, borderWidth: 1, borderColor: '#C8E8D5',
-  },
   button: { backgroundColor: '#0FA968', borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 8 },
+  buttonDisabled: { opacity: 0.6 },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '700' },
-  link: { marginTop: 20, alignItems: 'center' },
-  linkText: { color: '#0FA968', fontSize: 14 },
 });

@@ -10,19 +10,17 @@ export default function Index() {
   useEffect(() => {
     async function bootstrap() {
       // 1. Check onboarding
-      // TODO: временно для тестирования — всегда показываем онбординг
-      await AsyncStorage.removeItem('onboarding_complete');
-      const onboardingDone = null;
+      const onboardingDone = await AsyncStorage.getItem('onboarding_complete');
       if (onboardingDone !== 'true') {
         router.replace('/(onboarding)');
         return;
       }
 
-      // 2. Check auth
+      // 2. Check auth session
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        router.replace('/(auth)/login');
+        router.replace('/(auth)/register');
         return;
       }
 

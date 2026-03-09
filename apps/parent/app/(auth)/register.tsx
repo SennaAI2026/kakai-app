@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
+  Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -18,23 +18,18 @@ function generateInviteCode(): string {
 export default function RegisterScreen() {
   const router = useRouter();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
-    if (!name || !email || !password || !familyName) {
-      Alert.alert(t('common.error'), t('auth.errors.emailRequired'));
-      return;
-    }
-    if (password.length < 6) {
-      Alert.alert(t('common.error'), t('auth.errors.passwordShort'));
+    if (!name || !familyName) {
+      Alert.alert(t('common.error'), t('auth.errors.nameRequired'));
       return;
     }
     setLoading(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email: email.trim(), password });
+    // 1. Anonymous Auth — no email/password required
+    const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
 
     if (authError || !authData.user) {
       Alert.alert(t('common.error'), authError?.message ?? t('auth.errors.unknown'));
@@ -42,21 +37,7 @@ export default function RegisterScreen() {
       return;
     }
 
-    // Ensure we have an active session (email confirmation may be disabled)
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[Register] session after signUp:', session ? 'OK' : 'MISSING');
-
-    if (!session) {
-      // If no session, try signing in immediately
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (signInError) {
-        Alert.alert(t('common.error'), 'Не удалось войти после регистрации. Проверьте почту.');
-        setLoading(false);
-        return;
-      }
-    }
-
-    // 1. Create user record first (families.parent_id is FK → users.id)
+    // 2. Create user record (families.parent_id is FK → users.id)
     const { error: userError } = await supabase.from('users').insert({
       id: authData.user.id,
       role: 'parent',
@@ -64,17 +45,14 @@ export default function RegisterScreen() {
       lang: 'ru',
     });
 
-    console.log('[Register] user insert:', userError ? `FAIL: ${userError.message}` : 'OK');
-
     if (userError) {
       Alert.alert(t('common.error'), userError.message);
       setLoading(false);
       return;
     }
 
-    // 2. Create family (now parent_id FK is valid)
+    // 3. Create family with invite code
     const inviteCode = generateInviteCode();
-    console.log('[Register] generated invite code:', inviteCode);
 
     const { data: family, error: familyError } = await supabase
       .from('families')
@@ -82,21 +60,17 @@ export default function RegisterScreen() {
       .select('id')
       .single();
 
-    console.log('[Register] family insert:', family ? `OK id=${family.id}` : 'FAIL', familyError?.message);
-
     if (familyError || !family) {
       Alert.alert(t('common.error'), familyError?.message ?? t('auth.errors.unknown'));
       setLoading(false);
       return;
     }
 
-    // 3. Link user to family
+    // 4. Link user to family
     const { error: linkError } = await supabase
       .from('users')
       .update({ family_id: family.id })
       .eq('id', authData.user.id);
-
-    console.log('[Register] link user→family:', linkError ? `FAIL: ${linkError.message}` : `OK family_id=${family.id}`);
 
     if (linkError) {
       Alert.alert(t('common.error'), linkError.message);
@@ -124,23 +98,6 @@ export default function RegisterScreen() {
           onChangeText={setName}
           maxLength={30}
           autoComplete="name"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.emailPlaceholder')}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.passwordPlaceholder')}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="password"
         />
         <TextInput
           style={styles.input}

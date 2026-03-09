@@ -20,7 +20,9 @@
       "Bash(npx supabase:*)",
       "Bash(curl:*)",
       "Bash(head:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(powershell:*)",
+      "Bash(powershell.exe:*)"
     ]
   }
 }

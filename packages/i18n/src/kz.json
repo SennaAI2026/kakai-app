@@ -54,7 +54,10 @@
     "inviteCodePlaceholder": "XXXXXX",
     "inviteCodeInvalid": "Шақыру коды жарамсыз",
     "joinFamily": "Отбасыға қосылу",
+    "inviteCodeHint": "Kakai қосымшасынан ата-анадан кодты сұраңыз",
+    "loginHint": "Баптауларда email байлағандар үшін",
     "errors": {
+      "nameRequired": "Атыңызды енгізіңіз",
       "emailRequired": "Email енгізіңіз",
       "emailInvalid": "Email форматы дұрыс емес",
       "passwordRequired": "Құпия сөзді енгізіңіз",
