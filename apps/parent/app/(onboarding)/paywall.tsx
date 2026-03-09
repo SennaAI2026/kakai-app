@@ -46,13 +46,13 @@ export default function PaywallScreen() {
     setTimeout(async () => {
       await completeOnboarding();
       setLoading(false);
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/register');
     }, 600);
   }
 
   function handleFree() {
     completeOnboarding().then(() => {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/register');
     });
   }
 

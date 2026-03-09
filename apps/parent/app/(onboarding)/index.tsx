@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Image,
-  Dimensions, ScrollView, StatusBar,
+  Dimensions, ScrollView, StatusBar, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { supabase } from '@kakai/api';
 
 const { width: W, height: H } = Dimensions.get('window');
 const GREEN = '#2DB573';
@@ -617,8 +618,60 @@ const slide = StyleSheet.create({
 
 // --- SLIDE 13 - Waiting for child (invite code) ---
 
-function Slide13({ t, onBack, onHelp }: { t: T; onBack: () => void; onHelp: () => void }) {
-  const inviteCode = '000-000';
+function Slide13({ t, onBack, onHelp, onChildConnected }: { t: T; onBack: () => void; onHelp: () => void; onChildConnected: () => void }) {
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [familyId, setFamilyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadInviteCode() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('family_id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (!user?.family_id) return;
+      setFamilyId(user.family_id);
+
+      const { data: family } = await supabase
+        .from('families')
+        .select('invite_code')
+        .eq('id', user.family_id)
+        .maybeSingle();
+
+      if (family?.invite_code) {
+        const code = family.invite_code;
+        setInviteCode(code.length === 6 ? `${code.slice(0, 3)}-${code.slice(3)}` : code);
+      }
+    }
+
+    loadInviteCode();
+  }, []);
+
+  // Listen for child connecting (family.child_id becomes non-null)
+  useEffect(() => {
+    if (!familyId) return;
+
+    const channel = supabase
+      .channel(`family-${familyId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'families',
+        filter: `id=eq.${familyId}`,
+      }, (payload) => {
+        if (payload.new && payload.new.child_id) {
+          onChildConnected();
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [familyId]);
+
   return (
     <BgImage source={IMAGES.bgLight}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -631,9 +684,13 @@ function Slide13({ t, onBack, onHelp }: { t: T; onBack: () => void; onHelp: () =
               {t.waitingTitle}
             </Text>
             <View style={{ backgroundColor: '#F3F4F6', borderRadius: 16, paddingVertical: 20, marginTop: 20, alignItems: 'center' }}>
-              <Text style={{ fontSize: 36, fontWeight: '900', color: GREEN, letterSpacing: 4 }}>
-                {inviteCode}
-              </Text>
+              {inviteCode ? (
+                <Text style={{ fontSize: 36, fontWeight: '900', color: GREEN, letterSpacing: 4 }}>
+                  {inviteCode}
+                </Text>
+              ) : (
+                <ActivityIndicator size="large" color={GREEN} />
+              )}
             </View>
             <Text style={{ fontSize: 14, color: GRAY, textAlign: 'center', lineHeight: 20, marginTop: 16 }}>
               {t.waitingHint}
@@ -686,7 +743,7 @@ export default function OnboardingIndex() {
       {i === 10 && <Slide10 t={t} role={selectedRole} setRole={setSelectedRole} onNext={next} />}
       {i === 11 && <Slide11 t={t} onNext={next} onBack={() => go(10)} />}
       {i === 12 && <Slide12 t={t} onSend={() => go(13)} onOther={() => go(13)} onBack={() => go(11)} />}
-      {i === 13 && <Slide13 t={t} onBack={() => go(12)} onHelp={() => router.replace('/(onboarding)/paywall')} />}
+      {i === 13 && <Slide13 t={t} onBack={() => go(12)} onHelp={() => router.replace('/(onboarding)/paywall')} onChildConnected={() => router.replace('/(onboarding)/paywall')} />}
     </View>
   );
 }
