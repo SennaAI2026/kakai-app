@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Image,
-  Dimensions, ScrollView, StatusBar, ActivityIndicator,
+  View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground,
+  Dimensions, ScrollView, StatusBar, ActivityIndicator, Share, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,7 +15,7 @@ const GRAY = '#6B7280';
 const LIGHT_GRAY = '#E5E7EB';
 const YELLOW = '#FEF3C7';
 const DOT_COUNT = 7;
-const SLIDE_COUNT = 14;
+const SLIDE_COUNT = 15;
 const IMG_BG = '#D5D8DC';
 
 const IMAGES = {
@@ -34,6 +34,7 @@ const IMAGES = {
   childIcon: require('../../assets/child-icon-512.png'),
   bgLight: require('../../assets/bg_light.png'),
   mascotClean: require('../../assets/giraffe_mascot_clean.png'),
+  waitingSetup: require('../../assets/giraffe_waiting_setup.png'),
 };
 
 // --- Translations ---
@@ -82,6 +83,11 @@ const translations = {
     waitingTitle: 'Баланың телефонында жіберілген сілтемеге өтіңіз, Kakai Бала қосымшасын орнатыңыз және кодты енгізіңіз:',
     waitingHint: 'Бұл код Kakai Бала қосымшасын сіздің Kakai қосымшаңызбен байланыстырады!',
     needHelp: 'Маған көмек керек',
+    waitingSetupTitle: 'Баланың телефонында\nбаптауды жалғастырыңыз',
+    waitingSetupDesc: 'Бұл бірнеше минут алады',
+    childReady: 'Бала баптанды, жалғастыру',
+    getHelp: 'Көмек алу',
+    helpInstructions: '1. Баланың телефонында Kakai Бала қосымшасын ашыңыз\n2. Шақыру кодын енгізіңіз\n3. Экрандағы нұсқауларды орындаңыз',
   },
   ru: {
     welcomeTitle: 'Установите лимиты\nдля телефона ребёнка',
@@ -126,6 +132,11 @@ const translations = {
     waitingTitle: 'На телефоне ребёнка перейдите по отправленной ссылке, установите приложение Kakai Бала и введите в нём код:',
     waitingHint: 'Этот код свяжет приложение Kakai Бала с вашим родительским приложением Kakai и всё заработает!',
     needHelp: 'Мне нужна помощь',
+    waitingSetupTitle: 'Продолжите настройку\nна телефоне ребёнка',
+    waitingSetupDesc: 'Это займёт несколько минут',
+    childReady: 'Ребёнок настроен, продолжить',
+    getHelp: 'Получить помощь',
+    helpInstructions: '1. Откройте Kakai Бала на телефоне ребёнка\n2. Введите код приглашения\n3. Следуйте инструкциям на экране',
   },
   en: {
     welcomeTitle: 'Set limits for\nyour child\'s phone',
@@ -170,6 +181,11 @@ const translations = {
     waitingTitle: 'On the child\'s phone, follow the link, install Kakai Bala app and enter this code:',
     waitingHint: 'This code will link the Kakai Bala app with your parent Kakai app and everything will work!',
     needHelp: 'I need help',
+    waitingSetupTitle: 'Continue setup on\nyour child\'s phone',
+    waitingSetupDesc: 'This will take a few minutes',
+    childReady: 'Child is set up, continue',
+    getHelp: 'Get help',
+    helpInstructions: '1. Open Kakai Bala on the child\'s phone\n2. Enter the invite code\n3. Follow the on-screen instructions',
   },
 };
 
@@ -555,9 +571,17 @@ const s11 = StyleSheet.create({
   stepText: { fontSize: 15, fontWeight: '600', color: DARK, flex: 1 },
 });
 
-// --- SLIDE 12 - Send Link (no mascot) ---
+// --- SLIDE 12 - Send Link (with expo-sharing) ---
 
-function Slide12({ t, onSend, onOther, onBack }: { t: T; onSend: () => void; onOther: () => void; onBack: () => void }) {
+function Slide12({ t, inviteCode, onOther, onBack }: { t: T; inviteCode: string | null; onOther: () => void; onBack: () => void }) {
+  async function handleSendLink() {
+    const rawCode = inviteCode?.replace('-', '') ?? '';
+    const message = `${t.sendLinkDesc}\nhttps://kakai.kz/join?code=${rawCode}`;
+    try {
+      await Share.share({ message });
+    } catch {}
+  }
+
   return (
     <BgImage source={IMAGES.bgLight}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -582,7 +606,7 @@ function Slide12({ t, onSend, onOther, onBack }: { t: T; onSend: () => void; onO
         </View>
 
         <View style={{ paddingBottom: 8 }}>
-          <GreenBtn label={t.sendLink} onPress={onSend} />
+          <GreenBtn label={t.sendLink} onPress={handleSendLink} disabled={!inviteCode} />
         </View>
         <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 16 }} onPress={onOther} activeOpacity={0.7}>
           <Text style={{ fontSize: 15, fontWeight: '600', color: GREEN }}>{t.otherMethod}</Text>
@@ -616,62 +640,9 @@ const slide = StyleSheet.create({
   },
 });
 
-// --- SLIDE 13 - Waiting for child (invite code) ---
+// --- SLIDE 13 - Waiting for child (invite code, Realtime in parent) ---
 
-function Slide13({ t, onBack, onHelp, onChildConnected }: { t: T; onBack: () => void; onHelp: () => void; onChildConnected: () => void }) {
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [familyId, setFamilyId] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function loadInviteCode() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data: user } = await supabase
-        .from('users')
-        .select('family_id')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (!user?.family_id) return;
-      setFamilyId(user.family_id);
-
-      const { data: family } = await supabase
-        .from('families')
-        .select('invite_code')
-        .eq('id', user.family_id)
-        .maybeSingle();
-
-      if (family?.invite_code) {
-        const code = family.invite_code;
-        setInviteCode(code.length === 6 ? `${code.slice(0, 3)}-${code.slice(3)}` : code);
-      }
-    }
-
-    loadInviteCode();
-  }, []);
-
-  // Listen for child connecting (family.child_id becomes non-null)
-  useEffect(() => {
-    if (!familyId) return;
-
-    const channel = supabase
-      .channel(`family-${familyId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'families',
-        filter: `id=eq.${familyId}`,
-      }, (payload) => {
-        if (payload.new && payload.new.child_id) {
-          onChildConnected();
-        }
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [familyId]);
-
+function Slide13({ t, inviteCode, onBack, onHelp }: { t: T; inviteCode: string | null; onBack: () => void; onHelp: () => void }) {
   return (
     <BgImage source={IMAGES.bgLight}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -705,6 +676,33 @@ function Slide13({ t, onBack, onHelp, onChildConnected }: { t: T; onBack: () => 
   );
 }
 
+// --- SLIDE 14 - Waiting for child setup ---
+
+function Slide14({ t, onContinue, onHelp }: { t: T; onContinue: () => void; onHelp: () => void }) {
+  return (
+    <ImageBackground source={IMAGES.waitingSetup} resizeMode="cover" style={{ flex: 1, width: '100%', height: '100%' }}>
+      <StatusBar barStyle="light-content" />
+      <View style={{ flex: 1 }} />
+      <View style={s14.overlay}>
+        <Text style={s14.title}>{t.waitingSetupTitle}</Text>
+        <Text style={s14.desc}>{t.waitingSetupDesc}</Text>
+      </View>
+      <View style={s14.bottom}>
+        <GreenBtn label={t.childReady} onPress={onContinue} />
+        <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 16 }} onPress={onHelp} activeOpacity={0.7}>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: 'rgba(255,255,255,0.85)' }}>{t.getHelp}</Text>
+        </TouchableOpacity>
+      </View>
+    </ImageBackground>
+  );
+}
+const s14 = StyleSheet.create({
+  overlay: { position: 'absolute', bottom: 140, left: 0, right: 0, paddingHorizontal: 24 },
+  title: { fontSize: 24, fontWeight: '800', color: '#fff', textAlign: 'center', lineHeight: 32 },
+  desc: { fontSize: 16, color: '#fff', opacity: 0.8, textAlign: 'center', marginTop: 8 },
+  bottom: { position: 'absolute', bottom: 40, left: 0, right: 0 },
+});
+
 // --- MAIN ---
 
 export default function OnboardingIndex() {
@@ -713,10 +711,63 @@ export default function OnboardingIndex() {
   const [lang, setLang] = useState<Lang>('ru');
   const [surveySource, setSurveySource] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<'parent' | 'child' | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [familyId, setFamilyId] = useState<string | null>(null);
 
   const t = translations[lang];
   const go = (n: number) => setI(n);
   const next = () => setI((p) => Math.min(p + 1, SLIDE_COUNT - 1));
+
+  // Load invite code once (used by slides 12 & 13)
+  useEffect(() => {
+    async function loadInviteCode() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('family_id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (!user?.family_id) return;
+      setFamilyId(user.family_id);
+
+      const { data: family } = await supabase
+        .from('families')
+        .select('invite_code')
+        .eq('id', user.family_id)
+        .maybeSingle();
+
+      if (family?.invite_code) {
+        const code = family.invite_code;
+        setInviteCode(code.length === 6 ? `${code.slice(0, 3)}-${code.slice(3)}` : code);
+      }
+    }
+
+    loadInviteCode();
+  }, []);
+
+  // Realtime: listen for child connecting (works on slides 12 & 13)
+  useEffect(() => {
+    if (!familyId) return;
+
+    const channel = supabase
+      .channel(`family-${familyId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'families',
+        filter: `id=eq.${familyId}`,
+      }, (payload) => {
+        if (payload.new && (payload.new as Record<string, unknown>).child_id) {
+          setI(14);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [familyId]);
 
   const showSkip = i >= 1 && i <= 5;
 
@@ -742,8 +793,9 @@ export default function OnboardingIndex() {
       {i === 9 && <Slide9 t={t} onAllow={next} onLater={next} />}
       {i === 10 && <Slide10 t={t} role={selectedRole} setRole={setSelectedRole} onNext={next} />}
       {i === 11 && <Slide11 t={t} onNext={next} onBack={() => go(10)} />}
-      {i === 12 && <Slide12 t={t} onSend={() => go(13)} onOther={() => go(13)} onBack={() => go(11)} />}
-      {i === 13 && <Slide13 t={t} onBack={() => go(12)} onHelp={() => router.replace('/(onboarding)/paywall')} onChildConnected={() => router.replace('/(onboarding)/paywall')} />}
+      {i === 12 && <Slide12 t={t} inviteCode={inviteCode} onOther={() => go(13)} onBack={() => go(11)} />}
+      {i === 13 && <Slide13 t={t} inviteCode={inviteCode} onBack={() => go(12)} onHelp={() => Alert.alert(t.getHelp, t.helpInstructions)} />}
+      {i === 14 && <Slide14 t={t} onContinue={() => router.replace('/(onboarding)/paywall')} onHelp={() => Alert.alert(t.getHelp, t.helpInstructions)} />}
     </View>
   );
 }
