@@ -8,6 +8,8 @@ import type { Task, ScreenTime, User } from '@kakai/shared';
 import {
   getUsageStats,
   hasUsageStatsPermission,
+  setBlockingEnabled,
+  setBlockedApps,
 } from 'kakai-blocker';
 import type { UsageStat } from 'kakai-blocker';
 
@@ -56,7 +58,7 @@ function getNativeUsedMinutes(): number {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type UserRow = Pick<User, 'id' | 'name' | 'avatar_index'>;
-type TimeRow = Pick<ScreenTime, 'daily_limit_minutes' | 'used_minutes' | 'bonus_minutes'>;
+type TimeRow = Pick<ScreenTime, 'daily_limit_minutes' | 'used_minutes' | 'bonus_minutes' | 'is_blocked'>;
 type TaskRow = Pick<Task, 'id' | 'title' | 'description' | 'reward_minutes' | 'status' | 'created_at'>;
 
 // ─── Task card ───────────────────────────────────────────────────────────────
@@ -131,7 +133,7 @@ export default function HomeScreen() {
         .maybeSingle(),
       supabase
         .from('screen_time')
-        .select('daily_limit_minutes, used_minutes, bonus_minutes')
+        .select('daily_limit_minutes, used_minutes, bonus_minutes, is_blocked')
         .eq('child_id', authUser.id)
         .eq('date', today)
         .maybeSingle(),
@@ -149,6 +151,32 @@ export default function HomeScreen() {
 
     // Get real device usage from native module
     setNativeUsed(getNativeUsedMinutes());
+
+    // Sync blocking state to native SharedPreferences
+    if (Platform.OS === 'android') {
+      const dbBlocked = (timeData as TimeRow | null)?.is_blocked ?? false;
+      const localUsed = getNativeUsedMinutes();
+      const localRemaining = Math.max(
+        0,
+        ((timeData as TimeRow | null)?.daily_limit_minutes ?? 120)
+          - (localUsed > 0 ? localUsed : ((timeData as TimeRow | null)?.used_minutes ?? 0))
+          + ((timeData as TimeRow | null)?.bonus_minutes ?? 0),
+      );
+      const shouldBlock = dbBlocked || (localRemaining === 0 && (localUsed > 0 || ((timeData as TimeRow | null)?.used_minutes ?? 0) > 0));
+      try { setBlockingEnabled(shouldBlock); } catch {}
+
+      // Sync blocked/limited apps to native
+      try {
+        const { data: rules } = await supabase
+          .from('app_rules')
+          .select('package_name')
+          .eq('child_id', authUser.id)
+          .in('category', ['blocked', 'limited']);
+        if (rules) {
+          setBlockedApps(rules.map((r: { package_name: string }) => r.package_name));
+        }
+      } catch {}
+    }
   }, []);
 
   useEffect(() => {
@@ -166,7 +194,21 @@ export default function HomeScreen() {
       }, loadData)
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'screen_time',
-      }, loadData)
+      }, (payload) => {
+        loadData();
+        // Immediately sync blocking state from Realtime payload
+        if (Platform.OS === 'android' && payload.new) {
+          const row = payload.new as Record<string, unknown>;
+          const blocked = row.is_blocked === true;
+          try { setBlockingEnabled(blocked); } catch {}
+        }
+      })
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'app_rules',
+      }, () => {
+        // Re-sync blocked apps when rules change
+        loadData();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -201,7 +243,7 @@ export default function HomeScreen() {
   const bonus     = timeRow?.bonus_minutes       ?? 0;
   const remaining = Math.max(0, limit - used + bonus);
   const usedPct   = limit > 0 ? Math.min(1, used / limit) : 0;
-  const isBlocked = remaining === 0 && used > 0;
+  const isBlocked = (timeRow?.is_blocked ?? false) || (remaining === 0 && used > 0);
 
   const avatarEmoji  = AVATARS[user?.avatar_index ?? 0] ?? '🦊';
   const pendingCount = tasks.filter((t) => t.status === 'pending').length;
