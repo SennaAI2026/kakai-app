@@ -48,7 +48,7 @@ kakai-app/
 - **НЕТ** обязательной регистрации при старте
 - Anonymous Auth → UUID автоматически
 - Email/телефон — ДОБРОВОЛЬНО в табе "Ещё" → "Мой аккаунт"
-- `join.tsx` нужно переделать: убрать email+password, оставить только invite code
+- `join.tsx` — только invite code, без email+password (готово)
 
 ### База данных
 - `families.parent_id` — НЕ owner_id
@@ -114,28 +114,32 @@ kakai-app/
 ## Текущий статус
 
 ### Последний коммит
-`80a3683` — fix: onboarding UI - contain images, remove mascot white bg, add invite code screen, push screen redesign (2026-03-09)
+`7844fcd` — feat: switch to Anonymous Auth (parent register + child join) (2026-03-09)
 
 ### Что готово
 - **Монорепо:** полностью настроена (yarn workspaces, 2 apps + 3 packages)
+- **Anonymous Auth:** внедрён для обоих приложений — `signInAnonymously()` без email/password
+  - Parent `register.tsx` — только имя + название семьи → anonymous sign-in → create user + family
+  - Child `join.tsx` — только invite code → anonymous sign-in → create child user
+  - Parent `login.tsx` — оставлен для добровольного email-логина (кто привязал email в настройках)
+  - Parent `index.tsx` — нормальный auth gate (onboarding → session → family check), TODO-хардкод убран
 - **Parent app:** 16 экранов — auth (login, register), onboarding (13 слайдов + paywall), main (dashboard, tasks, history, map, schedule, more), модал app-rules
 - **Child app:** 15 экранов — auth (join), setup (accessibility, overlay, device-admin, battery, usage-stats, test-block), main (home, settings, more)
 - **Kotlin kakai-blocker:** все 6 файлов на месте (AppBlockerService, KakaiBlockerModule, KakaiDeviceAdmin, OverlayManager, PermissionChecker, UsageTracker)
 - **Supabase:** миграция v2 (users, families, tasks, screen_time, app_rules, schedules, usage_logs, gps_locations, subscriptions + RLS), 4 Edge Functions (approve-task, sync-usage, block-command, reset-daily)
-- **i18n:** ru.json + kz.json полные, автодетект locale
+- **i18n:** ru.json + kz.json полные, автодетект locale, новые ключи (inviteCodeHint, loginHint, errors.nameRequired)
 - **Env:** .env файлы в обоих apps с Supabase credentials
 - **Build:** EAS настроен, app.json v2.0.0, оба package name (kz.kakai.parent / kz.kakai.child)
 
 ### Что требует внимания
-- `apps/parent/app/index.tsx:13` — TODO: временно всегда показывает онбординг (для тестирования)
-- `join.tsx` — нужно переделать: убрать email+password, оставить только invite code (см. правила Auth)
 - `en.json` — отсутствует (английский перевод — TODO)
 - Child app: Supabase credentials перенести из hardcode в .env (по CLAUDE.md, но .env уже есть — проверить что реально используется)
+- `.expo/` попала в git — добавить в .gitignore
 
 ### Следующие шаги
-- Переделать `join.tsx` под Anonymous Auth + invite code only
-- Убрать TODO-хардкод в parent `index.tsx` (auth gate вместо принудительного онбординга)
+- Добавить `.expo/` в .gitignore
 - Добавить en.json для английской локализации
 - Тестирование Kotlin модуля kakai-blocker на реальном устройстве
 - Интеграция Supabase Realtime для синхронизации правил блокировки
 - Подключение Edge Functions к UI (approve-task, block-command)
+- Экран "Мой аккаунт" — добровольная привязка email/телефона
