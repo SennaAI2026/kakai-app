@@ -12,7 +12,7 @@
 - **Backend:** Supabase (PostgreSQL + Auth + Realtime + Edge Functions + Storage)
 - **Auth:** Supabase Anonymous Auth (signInAnonymously). Email/phone — ДОБРОВОЛЬНО в "Мой аккаунт"
 - **Native:** Kotlin (Expo Modules API) — модуль `kakai-blocker` в `apps/child/modules/`
-- **i18n:** Custom zero-dep solution. Файлы: `packages/i18n/` (kz.json, ru.json). en.json — TODO
+- **i18n:** i18n-js ^4.5.2 + expo-localization. Файлы: `packages/i18n/` (kz.json, ru.json). en.json — TODO
 - **Build:** EAS Build (development APK)
 - **IDE:** Cursor + Claude Code
 
@@ -110,3 +110,32 @@ kakai-app/
 - Android first (70%+ рынка KZ), iOS в Phase 3
 - Freemium: бесплатно (статистика+задания+GPS) / платно (блокировка+расписание)
 - Наши преимущества: переключатель языка, фото-доказательство заданий, offline-first, Realtime sync
+
+## Текущий статус
+
+### Последний коммит
+`80a3683` — fix: onboarding UI - contain images, remove mascot white bg, add invite code screen, push screen redesign (2026-03-09)
+
+### Что готово
+- **Монорепо:** полностью настроена (yarn workspaces, 2 apps + 3 packages)
+- **Parent app:** 16 экранов — auth (login, register), onboarding (13 слайдов + paywall), main (dashboard, tasks, history, map, schedule, more), модал app-rules
+- **Child app:** 15 экранов — auth (join), setup (accessibility, overlay, device-admin, battery, usage-stats, test-block), main (home, settings, more)
+- **Kotlin kakai-blocker:** все 6 файлов на месте (AppBlockerService, KakaiBlockerModule, KakaiDeviceAdmin, OverlayManager, PermissionChecker, UsageTracker)
+- **Supabase:** миграция v2 (users, families, tasks, screen_time, app_rules, schedules, usage_logs, gps_locations, subscriptions + RLS), 4 Edge Functions (approve-task, sync-usage, block-command, reset-daily)
+- **i18n:** ru.json + kz.json полные, автодетект locale
+- **Env:** .env файлы в обоих apps с Supabase credentials
+- **Build:** EAS настроен, app.json v2.0.0, оба package name (kz.kakai.parent / kz.kakai.child)
+
+### Что требует внимания
+- `apps/parent/app/index.tsx:13` — TODO: временно всегда показывает онбординг (для тестирования)
+- `join.tsx` — нужно переделать: убрать email+password, оставить только invite code (см. правила Auth)
+- `en.json` — отсутствует (английский перевод — TODO)
+- Child app: Supabase credentials перенести из hardcode в .env (по CLAUDE.md, но .env уже есть — проверить что реально используется)
+
+### Следующие шаги
+- Переделать `join.tsx` под Anonymous Auth + invite code only
+- Убрать TODO-хардкод в parent `index.tsx` (auth gate вместо принудительного онбординга)
+- Добавить en.json для английской локализации
+- Тестирование Kotlin модуля kakai-blocker на реальном устройстве
+- Интеграция Supabase Realtime для синхронизации правил блокировки
+- Подключение Edge Functions к UI (approve-task, block-command)
