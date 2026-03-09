@@ -3,75 +3,96 @@ import {
   View, Text, TouchableOpacity, StyleSheet, AppState, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  hasBatteryOptPermission,
-  requestBatteryOpt,
-} from 'kakai-blocker';
+import * as Location from 'expo-location';
 
-export default function BatteryScreen() {
+export default function GpsScreen() {
   const router = useRouter();
-  const [granted, setGranted] = useState(false);
+  const [fgGranted, setFgGranted] = useState(false);
+  const [bgGranted, setBgGranted] = useState(false);
 
-  const checkPermission = useCallback(() => {
-    try {
-      setGranted(hasBatteryOptPermission());
-    } catch {}
+  const checkPermissions = useCallback(async () => {
+    const { status: fg } = await Location.getForegroundPermissionsAsync();
+    setFgGranted(fg === 'granted');
+    if (fg === 'granted') {
+      const { status: bg } = await Location.getBackgroundPermissionsAsync();
+      setBgGranted(bg === 'granted');
+    }
   }, []);
 
   useEffect(() => {
-    checkPermission();
+    checkPermissions();
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') checkPermission();
+      if (state === 'active') checkPermissions();
     });
     return () => sub.remove();
-  }, [checkPermission]);
+  }, [checkPermissions]);
 
-  function handleRequest() {
-    try { requestBatteryOpt(); } catch {}
+  async function handleForeground() {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    setFgGranted(status === 'granted');
   }
+
+  async function handleBackground() {
+    const { status } = await Location.requestBackgroundPermissionsAsync();
+    setBgGranted(status === 'granted');
+  }
+
+  const allGranted = fgGranted && bgGranted;
 
   return (
     <View style={s.root}>
       <View style={s.progressWrap}>
         <View style={s.progressTrack}>
-          <View style={[s.progressFill, { width: '90%' }]} />
+          <View style={[s.progressFill, { width: '72%' }]} />
         </View>
       </View>
 
       <View style={s.content}>
         <View style={s.iconWrap}>
-          <Text style={s.icon}>🔋</Text>
-          {granted && <View style={s.checkBadge}><Text style={s.checkText}>✓</Text></View>}
+          <Text style={s.icon}>📍</Text>
+          {allGranted && <View style={s.checkBadge}><Text style={s.checkText}>✓</Text></View>}
         </View>
 
-        <Text style={s.title}>Режим экономии батареи</Text>
+        <Text style={s.title}>Местоположение</Text>
         <Text style={s.desc}>
-          Kakai работает в фоне и точно не пропустит ни одной минуты твоего экранного времени.
+          Kakai отправляет GPS-координаты родителям, чтобы они знали где ты находишься.
         </Text>
 
-        <View style={s.bubble}>
-          <Text style={s.bubbleText}>
-            Нажми "Разрешить" → выбери "Не экономить"
-          </Text>
-        </View>
-
-        {granted ? (
+        {!fgGranted ? (
+          <>
+            <View style={s.bubble}>
+              <Text style={s.bubbleText}>
+                Шаг 1: Разреши доступ к местоположению
+              </Text>
+            </View>
+            <TouchableOpacity style={s.btnBig} onPress={handleForeground} activeOpacity={0.85}>
+              <Text style={s.btnBigText}>Разрешить →</Text>
+            </TouchableOpacity>
+          </>
+        ) : !bgGranted ? (
+          <>
+            <View style={s.bubble}>
+              <Text style={s.bubbleText}>
+                Шаг 2: Выбери "Разрешить всегда" для работы в фоне
+              </Text>
+            </View>
+            <TouchableOpacity style={s.btnBig} onPress={handleBackground} activeOpacity={0.85}>
+              <Text style={s.btnBigText}>Разрешить всегда →</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
           <View style={s.grantedCard}>
             <Text style={s.grantedIcon}>✅</Text>
-            <Text style={s.grantedText}>Разрешение получено!</Text>
+            <Text style={s.grantedText}>GPS разрешение получено!</Text>
           </View>
-        ) : (
-          <TouchableOpacity style={s.btnBig} onPress={handleRequest} activeOpacity={0.85}>
-            <Text style={s.btnBigText}>Разрешить →</Text>
-          </TouchableOpacity>
         )}
 
         <TouchableOpacity
           style={s.nextBtn}
-          onPress={() => router.push('/(setup)/gps')}
+          onPress={() => router.push('/(setup)/pin')}
           activeOpacity={0.85}
         >
-          <Text style={s.nextBtnText}>{granted ? 'Далее →' : 'Пропустить'}</Text>
+          <Text style={s.nextBtnText}>{allGranted ? 'Далее →' : 'Пропустить'}</Text>
         </TouchableOpacity>
 
         <View style={s.dots}>
@@ -79,7 +100,10 @@ export default function BatteryScreen() {
           <View style={s.dot} />
           <View style={s.dot} />
           <View style={s.dot} />
+          <View style={s.dot} />
           <View style={[s.dot, s.dotActive]} />
+          <View style={s.dot} />
+          <View style={s.dot} />
         </View>
       </View>
     </View>

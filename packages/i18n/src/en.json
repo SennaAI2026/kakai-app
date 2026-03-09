@@ -183,10 +183,22 @@
       "desc": "Allows tracking of the child's physical activity.",
       "why": "Phase 2 feature — can be skipped for now."
     },
+    "gps": {
+      "title": "Location",
+      "desc": "Kakai sends GPS coordinates to parents so they know where you are.",
+      "step1": "Step 1: Allow access to location",
+      "step2": "Step 2: Choose \"Allow always\" for background tracking",
+      "granted": "GPS permission granted!",
+      "allowAlways": "Allow always →"
+    },
     "pinCode": {
       "title": "Parent PIN code",
       "subtitle": "This code protects Kakai settings on the phone",
       "hint": "Remember this code — it's needed to access settings",
+      "create": "Create PIN code",
+      "confirm": "Confirm PIN code",
+      "mismatch": "PIN codes don't match",
+      "mismatchDesc": "Please try again",
       "saved": "PIN saved ✓"
     },
     "scheduleChild": {

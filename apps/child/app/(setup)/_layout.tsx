@@ -17,6 +17,9 @@ export default function SetupLayout() {
         <Stack.Screen name="overlay" />
         <Stack.Screen name="device-admin" />
         <Stack.Screen name="battery" />
+        <Stack.Screen name="gps" />
+        <Stack.Screen name="pin" />
+        <Stack.Screen name="schedule" />
         <Stack.Screen name="test-block" options={{ animation: 'fade' }} />
       </Stack>
     </View>
