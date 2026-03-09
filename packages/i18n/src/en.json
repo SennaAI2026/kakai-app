@@ -1,0 +1,555 @@
+{
+  "common": {
+    "appName": "Kakai",
+    "continue": "Continue",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "done": "Done",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "skip": "Skip",
+    "next": "Next",
+    "finish": "Finish",
+    "minutes": "min",
+    "hours": "h",
+    "days": "d",
+    "of": "of",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "name": "Name"
+  },
+
+  "auth": {
+    "welcome": "Welcome to Kakai",
+    "tagline": "Parental control for caring parents",
+    "signIn": "Sign In",
+    "signUp": "Create Account",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "example@mail.com",
+    "passwordPlaceholder": "At least 6 characters",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "resetPasswordSent": "Reset link sent to your email",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "orContinueWith": "or continue with",
+    "google": "Google",
+    "apple": "Apple",
+    "pin": "PIN code",
+    "pinEnter": "Enter PIN code",
+    "pinCreate": "Create PIN code",
+    "pinConfirm": "Confirm PIN code",
+    "pinMismatch": "PIN codes don't match",
+    "pinWrong": "Wrong PIN code",
+    "inviteCode": "Invite Code",
+    "inviteCodePlaceholder": "XXXXXX",
+    "inviteCodeInvalid": "Invalid invite code",
+    "joinFamily": "Join Family",
+    "inviteCodeHint": "Ask your parent for the code from the Kakai app",
+    "loginHint": "For those who have linked their email in settings",
+    "errors": {
+      "nameRequired": "Please enter your name",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Invalid email format",
+      "passwordRequired": "Please enter your password",
+      "passwordShort": "Password must be at least 6 characters",
+      "invalidCredentials": "Invalid email or password",
+      "networkError": "Network error. Check your internet connection",
+      "unknown": "An unknown error occurred"
+    }
+  },
+
+  "setup": {
+    "step1": {
+      "title": "Are you a parent or a child?",
+      "subtitle": "Choose your role in the family",
+      "parent": "I'm a parent",
+      "parentDesc": "Setting up controls for my children",
+      "child": "I'm a child",
+      "childDesc": "Joining my family"
+    },
+    "step2": {
+      "title": "What's your name?",
+      "subtitle": "This name will be visible to your family",
+      "namePlaceholder": "Your name"
+    },
+    "step3": {
+      "title": "Choose an avatar",
+      "subtitle": "Pick a picture for your profile"
+    },
+    "step4": {
+      "title": "Create your family",
+      "subtitle": "Choose a name for your family",
+      "familyNamePlaceholder": "e.g. The Smith Family",
+      "or": "or",
+      "joinExisting": "Join an existing family"
+    },
+    "step5": {
+      "title": "Create a PIN code",
+      "subtitle": "PIN will protect parent settings"
+    },
+    "step6": {
+      "title": "Confirm PIN code",
+      "subtitle": "Enter PIN again to confirm"
+    },
+    "step7": {
+      "title": "Add a child",
+      "subtitle": "Enter your child's name",
+      "childNamePlaceholder": "Child's name",
+      "addAnother": "Add another child",
+      "skip": "Add later"
+    },
+    "step8": {
+      "title": "Child's avatar",
+      "subtitle": "Choose an avatar for %{name}"
+    },
+    "step9": {
+      "title": "Daily screen limit",
+      "subtitle": "How many hours per day can %{name} use their phone?",
+      "limit": "Limit: %{hours}h %{minutes}min"
+    },
+    "step10": {
+      "title": "Sleep schedule",
+      "subtitle": "What time should %{name} go to bed?",
+      "sleepTime": "Bedtime",
+      "wakeTime": "Wake-up time"
+    },
+    "step11": {
+      "title": "School schedule",
+      "subtitle": "Set the time when %{name} is at school",
+      "startTime": "Start",
+      "endTime": "End",
+      "schoolDays": "School days"
+    },
+    "step12": {
+      "title": "Code for your child",
+      "subtitle": "Show this code to your child to connect their device",
+      "inviteCode": "Invite code",
+      "copyCode": "Copy code",
+      "codeCopied": "Code copied",
+      "shareCode": "Share code"
+    },
+    "step13": {
+      "title": "All set!",
+      "subtitle": "Kakai is set up and protecting %{name}",
+      "goToDashboard": "Go to dashboard"
+    },
+
+    "permissions": {
+      "grant": "Enable",
+      "granted": "Permission granted ✓",
+      "notGranted": "Not granted",
+      "openSettings": "Open Settings",
+      "canSkip": "Can be set up later",
+      "next": "Next"
+    },
+    "usageStats": {
+      "title": "Usage Statistics",
+      "desc": "Kakai tracks time in each app — this is the main permission for screen control.",
+      "why": "Without it, parents won't see how much time is spent in each app."
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "desc": "Allows Kakai to block apps when the daily limit is reached.",
+      "why": "Without it, app blocking won't work."
+    },
+    "overlay": {
+      "title": "Display Over Other Apps",
+      "desc": "Kakai shows a lock screen over blocked apps.",
+      "why": "Without it, the lock screen won't appear."
+    },
+    "deviceAdmin": {
+      "title": "Device Administrator",
+      "desc": "Protects Kakai from being uninstalled by the child without parents knowing.",
+      "why": "Without it, the child can uninstall the app at any time."
+    },
+    "battery": {
+      "title": "Battery Optimization",
+      "desc": "Disable battery optimization so Kakai runs continuously in the background.",
+      "why": "Without this, the phone may stop Kakai to save battery."
+    },
+    "activity": {
+      "title": "Activity Recognition",
+      "desc": "Allows tracking of the child's physical activity.",
+      "why": "Phase 2 feature — can be skipped for now."
+    },
+    "pinCode": {
+      "title": "Parent PIN code",
+      "subtitle": "This code protects Kakai settings on the phone",
+      "hint": "Remember this code — it's needed to access settings",
+      "saved": "PIN saved ✓"
+    },
+    "scheduleChild": {
+      "title": "Schedule",
+      "subtitle": "Kakai will automatically restrict the phone during these times",
+      "school": "School",
+      "schoolTime": "Mon–Fri, 08:00–16:00",
+      "sleep": "Sleep",
+      "sleepTime": "Daily, 21:00–07:00"
+    },
+    "testBlock": {
+      "title": "Blocking Test",
+      "subtitle": "Let's check that everything works",
+      "instruction": "Minimize Kakai and open any other app.",
+      "expected": "Kakai should automatically block it.",
+      "hint": "If blocking doesn't work — check permissions from previous steps.",
+      "working": "It works! ✓",
+      "skip": "Skip test"
+    },
+    "complete": {
+      "title": "Phone is set up!",
+      "subtitle": "Kakai is protecting the device and sending data to parents in real time.",
+      "go": "Start"
+    }
+  },
+
+  "child": {
+    "home": {
+      "title": "Hi, %{name}!",
+      "screenTimeLeft": "Time remaining",
+      "screenTimeUsed": "Used",
+      "dailyLimit": "Daily limit",
+      "bonus": "Task bonus",
+      "blocked": "Screen time is up",
+      "blockedDesc": "Ask your parents to add time or complete a task"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "empty": "No tasks",
+      "emptyDesc": "Ask your parents to add a task",
+      "reward": "+%{minutes} min",
+      "complete": "Completed!",
+      "pending": "Awaiting review",
+      "markDone": "Mark as done"
+    },
+    "apps": {
+      "title": "My Apps",
+      "blocked": "Blocked",
+      "limited": "Limited",
+      "timeLeft": "%{minutes} min left"
+    },
+    "schedule": {
+      "title": "Schedule",
+      "sleep": "Bedtime",
+      "school": "School",
+      "free": "Free time"
+    }
+  },
+
+  "parent": {
+    "home": {
+      "title": "Family",
+      "children": "Children",
+      "addChild": "Add a child",
+      "noChildren": "No children",
+      "noChildrenDesc": "Add a child to get started"
+    },
+    "child": {
+      "screenTime": "Screen Time",
+      "usedToday": "Used today",
+      "dailyLimit": "Daily limit",
+      "addTime": "Add time",
+      "addTimeTitle": "Add screen time",
+      "addMinutes": "Minutes",
+      "location": "Location",
+      "locationUnknown": "Unknown",
+      "locationUpdated": "Updated %{time}",
+      "tasks": "Tasks",
+      "apps": "Apps",
+      "schedule": "Schedule",
+      "settings": "Settings"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "add": "Add task",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Clean your room",
+      "description": "Description (optional)",
+      "reward": "Reward (minutes)",
+      "empty": "No active tasks",
+      "approve": "Approve",
+      "reject": "Reject",
+      "awaitingApproval": "Awaiting approval",
+      "completed": "Completed",
+      "rejected": "Rejected"
+    },
+    "apps": {
+      "title": "Apps",
+      "block": "Block",
+      "unblock": "Unblock",
+      "setLimit": "Set limit",
+      "noLimit": "No limit",
+      "limitMinutes": "Limit: %{minutes} min/day",
+      "category": "Category"
+    },
+    "schedule": {
+      "title": "Schedule",
+      "add": "Add schedule",
+      "sleep": "Sleep",
+      "school": "School",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "days": "Days",
+      "active": "Active",
+      "inactive": "Inactive"
+    }
+  },
+
+  "onboarding": {
+    "slide1": {
+      "title": "Protect your kids online",
+      "desc": "Kakai helps control phone time and online safety"
+    },
+    "slide2": {
+      "title": "Smart screen control",
+      "desc": "Set daily limits and sleep & school schedules"
+    },
+    "slide3": {
+      "title": "Tasks & rewards",
+      "desc": "Motivate kids to complete tasks to earn extra screen time"
+    },
+    "slide4": {
+      "title": "Location",
+      "desc": "Always know where your child is"
+    },
+    "getStarted": "Get Started"
+  },
+
+  "paywall": {
+    "title": "Kakai Premium",
+    "subtitle": "Complete protection for your family",
+    "features": {
+      "screenTime": "Screen time control",
+      "appBlock": "App blocking",
+      "location": "Real-time GPS location",
+      "schedules": "Smart schedules",
+      "tasks": "Tasks & rewards",
+      "reports": "Detailed reports",
+      "multiChild": "Multiple children"
+    },
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "lifetime": "Lifetime",
+    "perMonth": "/mo",
+    "perYear": "/yr",
+    "oneTime": "one-time",
+    "save": "Save %{percent}%",
+    "mostPopular": "Most Popular",
+    "bestValue": "Best Value",
+    "trial": "3 days free",
+    "trialDesc": "Then %{price}",
+    "subscribe": "Start",
+    "restore": "Restore purchases",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "cancel": "Cancel anytime"
+  },
+
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "family": "Family",
+    "familyName": "Family name",
+    "inviteCode": "Invite code",
+    "copyInviteCode": "Copy code",
+    "language": "Language",
+    "ru": "Русский",
+    "kz": "Қазақша",
+    "en": "English",
+    "subscription": "Subscription",
+    "subscriptionActive": "Premium active until %{date}",
+    "subscriptionExpired": "Subscription expired",
+    "subscriptionTrial": "Trial period until %{date}",
+    "manage": "Manage subscription",
+    "changePin": "Change PIN",
+    "notifications": "Notifications",
+    "support": "Support",
+    "about": "About",
+    "version": "Version %{version}",
+    "signOut": "Sign out",
+    "deleteAccount": "Delete account",
+    "deleteAccountConfirm": "Are you sure? This action cannot be undone."
+  },
+
+  "ob": {
+    "skip": "Skip",
+    "continue": "Continue",
+    "yes": "Yes",
+    "no": "No",
+
+    "setupDone": {
+      "title": "Setup complete!",
+      "subtitle": "Let's explore what Kakai can do",
+      "cta": "Show me"
+    },
+
+    "goals": {
+      "title": "What concerns you?",
+      "subtitle": "Select everything that matters to you",
+      "cta": "Next",
+      "screenTime": "Too much phone time",
+      "study": "Interferes with studying",
+      "online": "Online threats",
+      "sleep": "Poor sleep",
+      "irritability": "Irritability",
+      "location": "Want to know where my child is"
+    },
+
+    "personalized": {
+      "title": "With Kakai you can:",
+      "screenTime": "See exact time spent in each app",
+      "study": "Block games during study time",
+      "online": "Block unwanted content",
+      "sleep": "Automatically turn off the phone at night",
+      "irritability": "Gradually reduce digital dependency",
+      "location": "See real-time location",
+      "cta": "Learn how"
+    },
+
+    "quizScreenTime": {
+      "question": "Do you know how much time %{name} spends on their phone?",
+      "yes": "Yes, roughly",
+      "no": "No, I don't track it",
+      "empathyYes": "Many parents are surprised to see the exact numbers. Kakai will show real statistics for every app.",
+      "empathyNo": "You're not alone — most parents don't know the exact numbers. Average screen time for kids is 6 hours a day."
+    },
+
+    "featureStats": {
+      "title": "2.5x less screen time with Kakai",
+      "subtitle": "Average result in the first 30 days",
+      "stat1": "6h → 2.4h",
+      "stat1Label": "Screen time per day",
+      "stat2": "89%",
+      "stat2Label": "Parents satisfied with results",
+      "stat3": "30 days",
+      "stat3Label": "To noticeable improvement"
+    },
+
+    "quizBlock": {
+      "question": "Do you need to block %{name}'s phone at certain times?",
+      "yes": "Yes, during school and at night",
+      "no": "Haven't thought about it yet",
+      "empathyYes": "Great decision. Block scheduling is Kakai's most effective tool according to parent reviews.",
+      "empathyNo": "Block scheduling is the feature 8 out of 10 parents call the most useful after the first week."
+    },
+
+    "featureBlock": {
+      "title": "Block games with one tap",
+      "subtitle": "Or set a schedule: school, sleep, family dinner",
+      "tag1": "🎮 Games",
+      "tag2": "📱 TikTok",
+      "tag3": "📺 YouTube",
+      "badge": "Works automatically"
+    },
+
+    "quizIrritability": {
+      "question": "Do you notice %{name} getting irritable when you take the phone away?",
+      "yes": "Yes, strong reactions",
+      "no": "No, everything's fine",
+      "empathyYes": "This is a sign of digital dependency. Don't blame yourself — it's a physiological brain response to dopamine. Kakai helps reduce it gently, gradually.",
+      "empathyNo": "Wonderful! Kakai will help maintain this balance and prevent dependency as they grow."
+    },
+
+    "featureReviews": {
+      "title": "What parents say about Kakai",
+      "r1": "\"In a month, my son started putting the phone down on his own. Didn't expect that!\"",
+      "r1a": "Aigerim, mother of an 11-year-old",
+      "r1s": "5",
+      "r2": "\"Finally know where my daughter is after school. Peace of mind is priceless.\"",
+      "r2a": "Sergey, father of a 13-year-old",
+      "r2s": "5",
+      "r3": "\"Grades improved in 2 months. Recommend to all parents.\"",
+      "r3a": "Madina, mother of two",
+      "r3s": "5"
+    },
+
+    "quizWorry": {
+      "question": "Do you worry when %{name} is not with you?",
+      "yes": "Yes, I worry a lot",
+      "no": "Not really",
+      "empathyYes": "Completely understandable. Kakai GPS updates every 5 minutes — you'll always know where your child is.",
+      "empathyNo": "That's great. GPS tracking will give even more peace of mind and help in emergencies."
+    },
+
+    "featureGps": {
+      "title": "Real-time location",
+      "subtitle": "Updates every 5 minutes. Works in the background.",
+      "accuracy": "Accuracy up to 10 meters",
+      "history": "Route history for 7 days"
+    },
+
+    "quizSleep": {
+      "question": "Does %{name} use their phone before bed or during school?",
+      "yes": "Yes, and it's a problem",
+      "no": "No, we have it under control",
+      "empathyYes": "Blue light suppresses melatonin and delays falling asleep by 1–2 hours. Kakai's sleep mode will automatically turn off the phone at the right time.",
+      "empathyNo": "Excellent! Kakai's schedule will help maintain this routine even when you're not around.",
+      "fact": "🔬 Blue light delays falling asleep by 1–2 hours"
+    },
+
+    "featureSchedule": {
+      "title": "Smart schedule",
+      "subtitle": "Phone automatically locks on schedule",
+      "sleep": "🌙 21:00–07:00  Sleep",
+      "school": "🏫 08:00–16:00  School",
+      "badge": "Works offline"
+    },
+
+    "loading": {
+      "title": "Preparing your plan...",
+      "s0": "Analyzing answers",
+      "s1": "Selecting settings",
+      "s2": "Creating profile",
+      "s3": "Done!"
+    },
+
+    "compare": {
+      "title": "What changes with Kakai",
+      "withoutTitle": "Without Kakai",
+      "withTitle": "With Kakai",
+      "r1w": "Don't know how much time is spent on phone",
+      "r1k": "Accurate stats for every app",
+      "r2w": "Conflicts when taking the phone away",
+      "r2k": "Phone locks automatically on schedule",
+      "r3w": "Don't know where your child is",
+      "r3k": "Real-time GPS",
+      "r4w": "Phone interferes with school and sleep",
+      "r4k": "Automatic blocking on schedule",
+      "cta": "Try Kakai"
+    },
+
+    "paywall": {
+      "title": "Protect %{name} right now",
+      "trialBadge": "3 days free",
+      "popularBadge": "Popular",
+      "saveBadge": "Save 54%",
+      "yearlyLabel": "Yearly",
+      "yearlyPrice": "690 ₸/mo",
+      "yearlyBilled": "8,290 ₸ per year",
+      "monthlyLabel": "Monthly",
+      "monthlyPrice": "1,490 ₸/mo",
+      "monthlyBilled": "1,490 ₸ per month",
+      "f1": "App statistics",
+      "f2": "Scheduled blocking",
+      "f3": "GPS location",
+      "f4": "Tasks & rewards",
+      "f5": "Multiple children",
+      "cta": "Start for free",
+      "ctaSub": "Then %{price}. Cancel anytime.",
+      "restore": "Restore purchases",
+      "freeCta": "Continue without subscription",
+      "guarantee": "7-day money-back guarantee, no questions asked"
+    }
+  }
+}

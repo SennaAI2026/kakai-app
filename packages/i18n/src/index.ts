@@ -2,16 +2,19 @@ import * as Localization from 'expo-localization';
 
 import ru from './ru.json';
 import kz from './kz.json';
+import en from './en.json';
 
-const translations: Record<string, any> = { ru, kz };
-let currentLocale: 'ru' | 'kz' = 'ru';
+const translations: Record<string, any> = { ru, kz, en };
+let currentLocale: 'ru' | 'kz' | 'en' = 'ru';
 
-// Detect locale: map 'kk' (Kazakh BCP-47) → 'kz' (our key), default to 'ru'
-function detectLocale(): 'ru' | 'kz' {
+// Detect locale: map 'kk' (Kazakh BCP-47) → 'kz' (our key), 'en' → 'en', default to 'ru'
+function detectLocale(): 'ru' | 'kz' | 'en' {
   const locales = Localization.getLocales();
   const tag = locales[0]?.languageTag ?? 'ru';
   const lang = tag.split('-')[0].toLowerCase();
-  return lang === 'kk' ? 'kz' : 'ru';
+  if (lang === 'kk') return 'kz';
+  if (lang === 'en') return 'en';
+  return 'ru';
 }
 
 currentLocale = detectLocale();
@@ -39,10 +42,10 @@ export function t(key: string, options?: Record<string, string | number>): strin
   return value;
 }
 
-export function setLocale(locale: 'ru' | 'kz') {
+export function setLocale(locale: 'ru' | 'kz' | 'en') {
   currentLocale = locale;
 }
 
-export function getLocale(): 'ru' | 'kz' {
+export function getLocale(): 'ru' | 'kz' | 'en' {
   return currentLocale;
 }
