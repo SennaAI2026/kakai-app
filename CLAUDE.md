@@ -114,7 +114,7 @@ kakai-app/
 ## Текущий статус
 
 ### Последний коммит
-`7844fcd` — feat: switch to Anonymous Auth (parent register + child join) (2026-03-09)
+`5cff5e8` — feat: fix link/code flow + add waiting screen in parent onboarding (2026-03-10)
 
 ### Что готово
 - **Монорепо:** полностью настроена (yarn workspaces, 2 apps + 3 packages)
@@ -122,24 +122,27 @@ kakai-app/
   - Parent `register.tsx` — только имя + название семьи → anonymous sign-in → create user + family
   - Child `join.tsx` — только invite code → anonymous sign-in → create child user
   - Parent `login.tsx` — оставлен для добровольного email-логина (кто привязал email в настройках)
-  - Parent `index.tsx` — нормальный auth gate (onboarding → session → family check), TODO-хардкод убран
-- **Parent app:** 16 экранов — auth (login, register), onboarding (13 слайдов + paywall), main (dashboard, tasks, history, map, schedule, more), модал app-rules
-- **Child app:** 15 экранов — auth (join), setup (accessibility, overlay, device-admin, battery, usage-stats, test-block), main (home, settings, more)
-- **Kotlin kakai-blocker:** все 6 файлов на месте (AppBlockerService, KakaiBlockerModule, KakaiDeviceAdmin, OverlayManager, PermissionChecker, UsageTracker)
+- **Parent app onboarding:** 15 slides (SLIDE_COUNT=15) — feature slides, survey, rating, push, role select, stepper, send link (Share Sheet), invite code display, waiting screen с giraffe_waiting_setup.png + paywall. Realtime подписка на families в OnboardingIndex (slides 12-13 → auto go(14) при подключении ребёнка)
+- **Parent app main:** dashboard, tasks, history, map, schedule, more, модал app-rules
+- **Child app setup:** 10 экранов — welcome/avatar/name/age (index.tsx), usage-stats, accessibility, overlay, device-admin, battery, **gps** (expo-location foreground+background), **pin** (4-digit keypad → families.parent_pin), **schedule** (sleep 22:00-07:00 + school 08:00-16:00 Пн-Пт → upsert schedules), test-block
+- **Child app main:** home (с Realtime blocking sync), settings, more
+- **Blocking end-to-end sync:** home.tsx — Realtime на screen_time.is_blocked → setBlockingEnabled(), Realtime на app_rules → setBlockedApps(), initial sync при mount, isBlocked = DB is_blocked || local fallback
+- **Kotlin kakai-blocker:** все 6 файлов (AppBlockerService, KakaiBlockerModule, KakaiDeviceAdmin, OverlayManager, PermissionChecker, UsageTracker). JS API: setBlockingEnabled, setBlockedApps, getBlockedApps, isBlockingEnabled + permissions + usage stats
 - **Supabase:** миграция v2 (users, families, tasks, screen_time, app_rules, schedules, usage_logs, gps_locations, subscriptions + RLS), 4 Edge Functions (approve-task, sync-usage, block-command, reset-daily)
-- **i18n:** ru.json + kz.json полные, автодетект locale, новые ключи (inviteCodeHint, loginHint, errors.nameRequired)
-- **Env:** .env файлы в обоих apps с Supabase credentials
+- **i18n:** ru.json + kz.json + en.json полные, автодетект locale, ключи setup.gps/pinCode/scheduleChild
+- **Env:** .env файлы в обоих apps с Supabase credentials (child app hardcode убран)
+- **Legacy cleanup:** .js файлы удалены, заменены на .tsx + Expo Router
 - **Build:** EAS настроен, app.json v2.0.0, оба package name (kz.kakai.parent / kz.kakai.child)
+- **Deps:** expo-location в child, expo-sharing в parent
 
 ### Что требует внимания
-- `en.json` — отсутствует (английский перевод — TODO)
-- Child app: Supabase credentials перенести из hardcode в .env (по CLAUDE.md, но .env уже есть — проверить что реально используется)
+- `parent_pin` хранится plain text — TODO: хеширование (SHA256 или bcrypt)
 - `.expo/` попала в git — добавить в .gitignore
+- Onboarding использует локальные переводы (объект translations в index.tsx), а не @kakai/i18n — рассмотреть миграцию
 
 ### Следующие шаги
-- Добавить `.expo/` в .gitignore
-- Добавить en.json для английской локализации
-- Тестирование Kotlin модуля kakai-blocker на реальном устройстве
-- Интеграция Supabase Realtime для синхронизации правил блокировки
+- Тестирование на реальном устройстве (EAS development build)
 - Подключение Edge Functions к UI (approve-task, block-command)
 - Экран "Мой аккаунт" — добровольная привязка email/телефона
+- Миграция локальных переводов onboarding → @kakai/i18n
+- Asset-файлы: проверить что все иконки/картинки оптимизированы и на месте
