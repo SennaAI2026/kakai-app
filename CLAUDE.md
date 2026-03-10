@@ -114,7 +114,7 @@ kakai-app/
 ## Текущий статус
 
 ### Последний коммит
-`5cff5e8` — feat: fix link/code flow + add waiting screen in parent onboarding (2026-03-10)
+`e321aed` — feat: add parent quiz selling flow (18 steps) (2026-03-11)
 
 ### Что готово
 - **Монорепо:** полностью настроена (yarn workspaces, 2 apps + 3 packages)
@@ -123,6 +123,7 @@ kakai-app/
   - Child `join.tsx` — только invite code → anonymous sign-in → create child user
   - Parent `login.tsx` — оставлен для добровольного email-логина (кто привязал email в настройках)
 - **Parent app onboarding:** 15 slides (SLIDE_COUNT=15) — feature slides, survey, rating, push, role select, stepper, send link (Share Sheet), invite code display, waiting screen с giraffe_waiting_setup.png + paywall. Realtime подписка на families в OnboardingIndex (slides 12-13 → auto go(14) при подключении ребёнка)
+- **Quiz selling flow:** 18 шагов в `quiz.tsx` — success, multi-select целей, персонализация, 5 quiz Да/Нет с empathy, feature-экраны (статистика из usage_logs, задания, блокировка, GPS из gps_locations, расписание, интернет-фильтр), social proof (4 отзыва), сравнение "Без/С Kakai", animated loading → paywall. Переводы ru/kz/en. Slide 14 → quiz → paywall
 - **Parent app main:** dashboard, tasks, history, map, schedule, more, модал app-rules
 - **Child app setup:** 10 экранов — welcome/avatar/name/age (index.tsx), usage-stats, accessibility, overlay, device-admin, battery, **gps** (expo-location foreground+background), **pin** (4-digit keypad → families.parent_pin), **schedule** (sleep 22:00-07:00 + school 08:00-16:00 Пн-Пт → upsert schedules), test-block
 - **Child app main:** home (с Realtime blocking sync), settings, more
