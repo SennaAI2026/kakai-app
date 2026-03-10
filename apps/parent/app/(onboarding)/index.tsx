@@ -795,7 +795,7 @@ export default function OnboardingIndex() {
       {i === 11 && <Slide11 t={t} onNext={next} onBack={() => go(10)} />}
       {i === 12 && <Slide12 t={t} inviteCode={inviteCode} onOther={() => go(13)} onBack={() => go(11)} />}
       {i === 13 && <Slide13 t={t} inviteCode={inviteCode} onBack={() => go(12)} onHelp={() => Alert.alert(t.getHelp, t.helpInstructions)} />}
-      {i === 14 && <Slide14 t={t} onContinue={() => router.replace('/(onboarding)/paywall')} onHelp={() => Alert.alert(t.getHelp, t.helpInstructions)} />}
+      {i === 14 && <Slide14 t={t} onContinue={() => router.push('/(onboarding)/quiz')} onHelp={() => Alert.alert(t.getHelp, t.helpInstructions)} />}
     </View>
   );
 }
