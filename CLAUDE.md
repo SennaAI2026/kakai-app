@@ -114,15 +114,16 @@ kakai-app/
 ## Текущий статус
 
 ### Последний коммит
-`e321aed` — feat: add parent quiz selling flow (18 steps) (2026-03-11)
+`18be774` — fix: add anonymous auth at role select in onboarding (2026-03-11)
 
 ### Что готово
 - **Монорепо:** полностью настроена (yarn workspaces, 2 apps + 3 packages)
 - **Anonymous Auth:** внедрён для обоих приложений — `signInAnonymously()` без email/password
-  - Parent `register.tsx` — только имя + название семьи → anonymous sign-in → create user + family
+  - Parent onboarding slide 10 (role select) — при нажатии "Продолжить" (role=parent) вызывает signInAnonymously() + создаёт user + family + invite_code. Сессия готова к slide 12/13
+  - Parent `register.tsx` — альтернативный вход: имя + название семьи → anonymous sign-in → create user + family
   - Child `join.tsx` — только invite code → anonymous sign-in → create child user
   - Parent `login.tsx` — оставлен для добровольного email-логина (кто привязал email в настройках)
-- **Parent app onboarding:** 15 slides (SLIDE_COUNT=15) — feature slides, survey, rating, push, role select, stepper, send link (Share Sheet), invite code display, waiting screen с giraffe_waiting_setup.png + paywall. Realtime подписка на families в OnboardingIndex (slides 12-13 → auto go(14) при подключении ребёнка)
+- **Parent app onboarding:** 15 slides (SLIDE_COUNT=15) — feature slides, survey, rating, push, role select (+ auth), stepper, send link (Share Sheet), invite code display, waiting screen с giraffe_waiting_setup.png + paywall. Realtime подписка на families в OnboardingIndex (slides 12-13 → auto go(14) при подключении ребёнка)
 - **Quiz selling flow:** 18 шагов в `quiz.tsx` — success, multi-select целей, персонализация, 5 quiz Да/Нет с empathy, feature-экраны (статистика из usage_logs, задания, блокировка, GPS из gps_locations, расписание, интернет-фильтр), social proof (4 отзыва), сравнение "Без/С Kakai", animated loading → paywall. Переводы ru/kz/en. Slide 14 → quiz → paywall
 - **Parent app main:** dashboard, tasks, history, map, schedule, more, модал app-rules
 - **Child app setup:** 10 экранов — welcome/avatar/name/age (index.tsx), usage-stats, accessibility, overlay, device-admin, battery, **gps** (expo-location foreground+background), **pin** (4-digit keypad → families.parent_pin), **schedule** (sleep 22:00-07:00 + school 08:00-16:00 Пн-Пт → upsert schedules), test-block
@@ -133,17 +134,25 @@ kakai-app/
 - **i18n:** ru.json + kz.json + en.json полные, автодетект locale, ключи setup.gps/pinCode/scheduleChild
 - **Env:** .env файлы в обоих apps с Supabase credentials (child app hardcode убран)
 - **Legacy cleanup:** .js файлы удалены, заменены на .tsx + Expo Router
-- **Build:** EAS настроен, app.json v2.0.0, оба package name (kz.kakai.parent / kz.kakai.child)
+- **Build:** EAS настроен, app.json v2.0.0, оба package name (kz.kakai.parent / kz.kakai.child), ассеты icon/splash/adaptive-icon на месте
 - **Deps:** expo-location в child, expo-sharing в parent
+
+### Исправленные баги (2026-03-11)
+- **Auth в onboarding:** onboarding запускался ДО auth — slide 12/13 invite code = null. Исправлено: signInAnonymously() вызывается на slide 10 при выборе роли "Родитель". User + family создаются сразу, invite_code попадает в state
+- **quiz.tsx типы:** Supabase column name mismatches — duration_minutes→minutes, latitude/longitude→lat/lng, created_at→recorded_at. app_name nullable → fallback ?? 'App'
+- **Missing assets:** icon.png, splash-icon.png, adaptive-icon.png отсутствовали → скопированы из parent-icon-512.png
 
 ### Что требует внимания
 - `parent_pin` хранится plain text — TODO: хеширование (SHA256 или bcrypt)
 - `.expo/` попала в git — добавить в .gitignore
 - Onboarding использует локальные переводы (объект translations в index.tsx), а не @kakai/i18n — рассмотреть миграцию
+- User name и family name = '' после onboarding auth — заполняются позже в "Мой аккаунт"
+- Quiz selling flow не протестирован на реальном устройстве (web preview работает)
+- Child app dev build запускается через `expo start --port 8082`
 
 ### Следующие шаги
-- Тестирование на реальном устройстве (EAS development build)
+- Тестирование полного flow в web: onboarding → quiz → paywall
+- EAS development build для Android тестирования
 - Подключение Edge Functions к UI (approve-task, block-command)
-- Экран "Мой аккаунт" — добровольная привязка email/телефона
+- Экран "Мой аккаунт" — добровольная привязка email/телефона + заполнение имени/семьи
 - Миграция локальных переводов onboarding → @kakai/i18n
-- Asset-файлы: проверить что все иконки/картинки оптимизированы и на месте
