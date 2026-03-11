@@ -13,14 +13,23 @@ export default function JoinScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleJoin() {
-    const code = inviteCode.trim().toUpperCase();
+    const code = inviteCode.trim().replace(/-/g, '');
     if (code.length !== 6) {
       Alert.alert(t('common.error'), t('auth.inviteCodeInvalid'));
       return;
     }
     setLoading(true);
 
-    // 1. Validate invite code
+    // 1. Anonymous Auth FIRST — needed for RLS on families SELECT
+    const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+
+    if (authError || !authData.user) {
+      Alert.alert(t('common.error'), authError?.message ?? t('auth.errors.unknown'));
+      setLoading(false);
+      return;
+    }
+
+    // 2. Validate invite code (now authenticated, RLS allows SELECT)
     const { data: family, error: familyError } = await supabase
       .from('families')
       .select('id, name')
@@ -29,15 +38,6 @@ export default function JoinScreen() {
 
     if (familyError || !family) {
       Alert.alert(t('common.error'), t('auth.inviteCodeInvalid'));
-      setLoading(false);
-      return;
-    }
-
-    // 2. Anonymous Auth — no email/password
-    const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-
-    if (authError || !authData.user) {
-      Alert.alert(t('common.error'), authError?.message ?? t('auth.errors.unknown'));
       setLoading(false);
       return;
     }
@@ -82,8 +82,8 @@ export default function JoinScreen() {
         placeholder={t('auth.inviteCodePlaceholder')}
         value={inviteCode}
         onChangeText={setInviteCode}
-        autoCapitalize="characters"
-        maxLength={6}
+        keyboardType="number-pad"
+        maxLength={7}
       />
 
       <TouchableOpacity

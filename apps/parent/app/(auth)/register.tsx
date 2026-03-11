@@ -9,9 +9,8 @@ import { t } from '@kakai/i18n';
 import { INVITE_CODE_LENGTH } from '@kakai/shared';
 
 function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from({ length: INVITE_CODE_LENGTH }, () =>
-    chars[Math.floor(Math.random() * chars.length)]
+    Math.floor(Math.random() * 10)
   ).join('');
 }
 

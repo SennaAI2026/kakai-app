@@ -722,9 +722,8 @@ export default function OnboardingIndex() {
   const next = () => setI((p) => Math.min(p + 1, SLIDE_COUNT - 1));
 
   function generateInviteCode(): string {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     return Array.from({ length: INVITE_CODE_LENGTH }, () =>
-      chars[Math.floor(Math.random() * chars.length)]
+      Math.floor(Math.random() * 10)
     ).join('');
   }
 
