@@ -143,6 +143,9 @@ kakai-app/
 - **quiz.tsx типы:** Supabase column name mismatches — duration_minutes→minutes, latitude/longitude→lat/lng, created_at→recorded_at. app_name nullable → fallback ?? 'App'
 - **Missing assets:** icon.png, splash-icon.png, adaptive-icon.png отсутствовали → скопированы из parent-icon-512.png
 
+### БЛОКЕР
+- **Anonymous Auth НЕ включен в Supabase Dashboard.** Нужно зайти в supabase.com/dashboard → проект `nhgcollyiqyexunvwywt` → Authentication → Providers → **Enable Anonymous Sign-Ins**. Без этого slide 10 не работает — `signInAnonymously()` возвращает 422.
+
 ### Диагностика
 - `console.log('[Onboarding] ...')` добавлен в handleRoleNext() — проверить в browser DevTools (F12 → Console) при нажатии "Продолжить" на slide 10
 
