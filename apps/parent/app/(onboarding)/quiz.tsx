@@ -422,23 +422,23 @@ export default function QuizScreen() {
       // Usage logs — top apps
       const { data: usage } = await supabase
         .from('usage_logs')
-        .select('app_name, duration_minutes')
+        .select('app_name, minutes')
         .eq('child_id', family.child_id)
-        .order('duration_minutes', { ascending: false })
+        .order('minutes', { ascending: false })
         .limit(5);
       if (usage && usage.length > 0) {
-        setUsageApps(usage.map((u) => ({ app_name: u.app_name, minutes: u.duration_minutes })));
+        setUsageApps(usage.map((u) => ({ app_name: u.app_name ?? 'App', minutes: u.minutes })));
       }
 
       // GPS — latest point
       const { data: gps } = await supabase
         .from('gps_locations')
-        .select('latitude, longitude')
+        .select('lat, lng')
         .eq('child_id', family.child_id)
-        .order('created_at', { ascending: false })
+        .order('recorded_at', { ascending: false })
         .limit(1);
       if (gps && gps.length > 0) {
-        setGpsPoint({ lat: gps[0].latitude, lng: gps[0].longitude });
+        setGpsPoint({ lat: gps[0].lat, lng: gps[0].lng });
       }
     }
     load();
