@@ -12,7 +12,7 @@
 - **Backend:** Supabase (PostgreSQL + Auth + Realtime + Edge Functions + Storage)
 - **Auth:** Supabase Anonymous Auth (signInAnonymously). Email/phone — ДОБРОВОЛЬНО в "Мой аккаунт"
 - **Native:** Kotlin (Expo Modules API) — модуль `kakai-blocker` в `apps/child/modules/`
-- **i18n:** i18n-js ^4.5.2 + expo-localization. Файлы: `packages/i18n/` (kz.json, ru.json). en.json — TODO
+- **i18n:** i18n-js ^4.5.2 + expo-localization. Файлы: `packages/i18n/` (kz.json, ru.json, en.json)
 - **Build:** EAS Build (development APK)
 - **IDE:** Cursor + Claude Code
 
@@ -91,8 +91,7 @@ kakai-app/
 - Никаких сетевых запросов внутри Service
 
 ### Supabase
-- Все credentials через env переменные (`EXPO_PUBLIC_SUPABASE_URL`)
-- ⚠️ Child app: перенести из hardcode в .env
+- Все credentials через env переменные (`EXPO_PUBLIC_SUPABASE_URL`) — оба apps
 - RLS обязателен для каждой таблицы
 - Edge Functions для бизнес-логики (approve-task, sync-usage, block-command)
 
@@ -114,52 +113,39 @@ kakai-app/
 ## Текущий статус
 
 ### Последний коммит
-`18be774` — fix: add anonymous auth at role select in onboarding (2026-03-11)
+`da8edbc` — fix: auth before family lookup in join + numeric invite codes (2026-03-11)
 
 ### Что готово
 - **Монорепо:** полностью настроена (yarn workspaces, 2 apps + 3 packages)
-- **Anonymous Auth:** внедрён для обоих приложений — `signInAnonymously()` без email/password
-  - Parent onboarding slide 10 (role select) — при нажатии "Продолжить" (role=parent) вызывает signInAnonymously() + создаёт user + family + invite_code. Сессия готова к slide 12/13
+- **Anonymous Auth:** включен в Supabase Dashboard + внедрён в обоих приложениях
+  - Parent onboarding slide 10 (role select) — signInAnonymously() + создаёт user + family + invite_code (6 цифр, формат XXX-XXX). Сессия готова к slide 12/13
   - Parent `register.tsx` — альтернативный вход: имя + название семьи → anonymous sign-in → create user + family
-  - Child `join.tsx` — только invite code → anonymous sign-in → create child user
+  - Child `join.tsx` — signInAnonymously() ПЕРЕД поиском family (RLS требует JWT) → invite code → create child user
   - Parent `login.tsx` — оставлен для добровольного email-логина (кто привязал email в настройках)
-- **Parent app onboarding:** 15 slides (SLIDE_COUNT=15) — feature slides, survey, rating, push, role select (+ auth), stepper, send link (Share Sheet), invite code display, waiting screen с giraffe_waiting_setup.png + paywall. Realtime подписка на families в OnboardingIndex (slides 12-13 → auto go(14) при подключении ребёнка)
-- **Quiz selling flow:** 18 шагов в `quiz.tsx` — success, multi-select целей, персонализация, 5 quiz Да/Нет с empathy, feature-экраны (статистика из usage_logs, задания, блокировка, GPS из gps_locations, расписание, интернет-фильтр), social proof (4 отзыва), сравнение "Без/С Kakai", animated loading → paywall. Переводы ru/kz/en. Slide 14 → quiz → paywall
+- **RLS:** миграция 002 применена — 17 policies для users, families, screen_time, tasks. Миграция 001 — 10 policies для app_rules, schedules, usage_logs, gps_locations, subscriptions. Итого 27 policies на 9 таблиц
+- **Invite code:** 6 цифр (формат XXX-XXX). Генерация в register.tsx и onboarding/index.tsx. join.tsx принимает с/без дефиса, number-pad клавиатура
+- **Parent app onboarding:** 15 slides (SLIDE_COUNT=15) — feature slides, survey, rating, push, role select (+ auth), stepper, send link (Share Sheet), invite code display, waiting screen с giraffe_waiting_setup.png + paywall. Realtime подписка на families (slides 12-13 → auto go(14) при подключении ребёнка). Web errors через window.alert (showError helper)
+- **Quiz selling flow:** 18 шагов в `quiz.tsx` — success, multi-select целей, персонализация, 5 quiz Да/Нет с empathy, feature-экраны (статистика, задания, блокировка, GPS, расписание, интернет-фильтр), social proof, сравнение, animated loading → paywall. Переводы ru/kz/en. Slide 14 → quiz → paywall
 - **Parent app main:** dashboard, tasks, history, map, schedule, more, модал app-rules
-- **Child app setup:** 10 экранов — welcome/avatar/name/age (index.tsx), usage-stats, accessibility, overlay, device-admin, battery, **gps** (expo-location foreground+background), **pin** (4-digit keypad → families.parent_pin), **schedule** (sleep 22:00-07:00 + school 08:00-16:00 Пн-Пт → upsert schedules), test-block
+- **Child app setup:** 10 экранов — welcome/avatar/name/age (index.tsx), usage-stats, accessibility, overlay, device-admin, battery, gps, pin, schedule, test-block
 - **Child app main:** home (с Realtime blocking sync), settings, more
-- **Blocking end-to-end sync:** home.tsx — Realtime на screen_time.is_blocked → setBlockingEnabled(), Realtime на app_rules → setBlockedApps(), initial sync при mount, isBlocked = DB is_blocked || local fallback
-- **Kotlin kakai-blocker:** все 6 файлов (AppBlockerService, KakaiBlockerModule, KakaiDeviceAdmin, OverlayManager, PermissionChecker, UsageTracker). JS API: setBlockingEnabled, setBlockedApps, getBlockedApps, isBlockingEnabled + permissions + usage stats
-- **Supabase:** миграция v2 (users, families, tasks, screen_time, app_rules, schedules, usage_logs, gps_locations, subscriptions + RLS), 4 Edge Functions (approve-task, sync-usage, block-command, reset-daily)
-- **i18n:** ru.json + kz.json + en.json полные, автодетект locale, ключи setup.gps/pinCode/scheduleChild
-- **Env:** .env файлы в обоих apps с Supabase credentials (child app hardcode убран)
-- **Legacy cleanup:** .js файлы удалены, заменены на .tsx + Expo Router
+- **Blocking end-to-end sync:** Realtime на screen_time.is_blocked + app_rules, initial sync при mount
+- **Kotlin kakai-blocker:** все 6 файлов. JS API: setBlockingEnabled, setBlockedApps, getBlockedApps, isBlockingEnabled + permissions + usage stats
+- **Supabase:** 2 миграции (001 schema + 002 RLS), 4 Edge Functions (approve-task, sync-usage, block-command, reset-daily). БД очищена — чистый старт, 0 записей
+- **i18n:** ru.json + kz.json + en.json полные, автодетект locale
+- **Env:** .env файлы в обоих apps с Supabase credentials
 - **Build:** EAS настроен, app.json v2.0.0, оба package name (kz.kakai.parent / kz.kakai.child), ассеты icon/splash/adaptive-icon на месте
-- **Deps:** expo-location в child, expo-sharing в parent
-
-### Исправленные баги (2026-03-11)
-- **Auth в onboarding:** onboarding запускался ДО auth — slide 12/13 invite code = null. Исправлено: signInAnonymously() вызывается на slide 10 при выборе роли "Родитель". User + family создаются сразу, invite_code попадает в state
-- **Alert.alert не работает в web:** React Native Alert не поддерживается на платформе web. Ошибки при auth/user/family creation молча глотались — кнопка разблокировалась, но пользователь не видел сообщения. Исправлено: добавлена функция `showError()` — `window.alert()` для web, `Alert.alert()` для native. Добавлен `catch` блок для unexpected errors
-- **quiz.tsx типы:** Supabase column name mismatches — duration_minutes→minutes, latitude/longitude→lat/lng, created_at→recorded_at. app_name nullable → fallback ?? 'App'
-- **Missing assets:** icon.png, splash-icon.png, adaptive-icon.png отсутствовали → скопированы из parent-icon-512.png
-
-### БЛОКЕР
-- **Anonymous Auth НЕ включен в Supabase Dashboard.** Нужно зайти в supabase.com/dashboard → проект `nhgcollyiqyexunvwywt` → Authentication → Providers → **Enable Anonymous Sign-Ins**. Без этого slide 10 не работает — `signInAnonymously()` возвращает 422.
-
-### Диагностика
-- `console.log('[Onboarding] ...')` добавлен в handleRoleNext() — проверить в browser DevTools (F12 → Console) при нажатии "Продолжить" на slide 10
 
 ### Что требует внимания
 - `parent_pin` хранится plain text — TODO: хеширование (SHA256 или bcrypt)
 - `.expo/` попала в git — добавить в .gitignore
 - Onboarding использует локальные переводы (объект translations в index.tsx), а не @kakai/i18n — рассмотреть миграцию
 - User name и family name = '' после onboarding auth — заполняются позже в "Мой аккаунт"
-- Quiz selling flow (18 шагов) реализован но не протестирован из-за бага auth выше — теперь можно тестить
-- Child app dev build запускается через `expo start --port 8082`
+- `console.log('[Onboarding] ...')` в handleRoleNext() — диагностика, можно убрать после стабилизации
+- Child app dev build: `expo start --port 8082`
 
 ### Следующие шаги
-- Тестирование полного flow в web: onboarding slide 10 → auth → slide 12 invite code → quiz → paywall
-- Проверить browser Console на ошибки при нажатии "Продолжить" (slide 10)
+- Тестирование полного flow: parent onboarding → invite code → child join → quiz → paywall
 - EAS development build для Android тестирования
 - Подключение Edge Functions к UI (approve-task, block-command)
 - Экран "Мой аккаунт" — добровольная привязка email/телефона + заполнение имени/семьи
