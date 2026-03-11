@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground,
-  Dimensions, ScrollView, StatusBar, ActivityIndicator, Share, Alert,
+  Dimensions, ScrollView, StatusBar, ActivityIndicator, Share, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -728,14 +728,24 @@ export default function OnboardingIndex() {
     ).join('');
   }
 
+  function showError(msg: string) {
+    console.error('[Onboarding]', msg);
+    if (Platform.OS === 'web') {
+      window.alert(msg);
+    } else {
+      Alert.alert('Error', msg);
+    }
+  }
+
   // Called when user selects "Parent" role and taps Continue on slide 10
   async function handleRoleNext() {
+    console.log('[Onboarding] handleRoleNext called, role:', selectedRole);
     if (selectedRole !== 'parent') { next(); return; }
 
     // Check if already authenticated (e.g. user went back and forward)
     const { data: { session: existing } } = await supabase.auth.getSession();
+    console.log('[Onboarding] existing session:', !!existing);
     if (existing) {
-      // Already have session — check if family exists
       const { data: existingUser } = await supabase
         .from('users')
         .select('family_id')
@@ -751,11 +761,13 @@ export default function OnboardingIndex() {
     setAuthLoading(true);
     try {
       // 1. Anonymous Auth
+      console.log('[Onboarding] calling signInAnonymously...');
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       if (authError || !authData.user) {
-        Alert.alert('Error', authError?.message ?? 'Auth failed');
+        showError(authError?.message ?? 'Auth failed');
         return;
       }
+      console.log('[Onboarding] auth success, uid:', authData.user.id);
 
       // 2. Create user record
       const { error: userError } = await supabase.from('users').insert({
@@ -765,7 +777,7 @@ export default function OnboardingIndex() {
         lang: (lang === 'en' ? 'ru' : lang) as 'ru' | 'kz',
       });
       if (userError) {
-        Alert.alert('Error', userError.message);
+        showError('User: ' + userError.message);
         return;
       }
 
@@ -777,9 +789,10 @@ export default function OnboardingIndex() {
         .select('id')
         .single();
       if (familyError || !family) {
-        Alert.alert('Error', familyError?.message ?? 'Family creation failed');
+        showError('Family: ' + (familyError?.message ?? 'creation failed'));
         return;
       }
+      console.log('[Onboarding] family created, code:', code);
 
       // 4. Link user to family
       await supabase.from('users').update({ family_id: family.id }).eq('id', authData.user.id);
@@ -788,6 +801,9 @@ export default function OnboardingIndex() {
       setFamilyId(family.id);
       setInviteCode(code.length === 6 ? `${code.slice(0, 3)}-${code.slice(3)}` : code);
       next();
+    } catch (err) {
+      console.error('[Onboarding] unexpected error:', err);
+      showError(String(err));
     } finally {
       setAuthLoading(false);
     }

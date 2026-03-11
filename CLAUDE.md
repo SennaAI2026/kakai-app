@@ -139,19 +139,24 @@ kakai-app/
 
 ### Исправленные баги (2026-03-11)
 - **Auth в onboarding:** onboarding запускался ДО auth — slide 12/13 invite code = null. Исправлено: signInAnonymously() вызывается на slide 10 при выборе роли "Родитель". User + family создаются сразу, invite_code попадает в state
+- **Alert.alert не работает в web:** React Native Alert не поддерживается на платформе web. Ошибки при auth/user/family creation молча глотались — кнопка разблокировалась, но пользователь не видел сообщения. Исправлено: добавлена функция `showError()` — `window.alert()` для web, `Alert.alert()` для native. Добавлен `catch` блок для unexpected errors
 - **quiz.tsx типы:** Supabase column name mismatches — duration_minutes→minutes, latitude/longitude→lat/lng, created_at→recorded_at. app_name nullable → fallback ?? 'App'
 - **Missing assets:** icon.png, splash-icon.png, adaptive-icon.png отсутствовали → скопированы из parent-icon-512.png
+
+### Диагностика
+- `console.log('[Onboarding] ...')` добавлен в handleRoleNext() — проверить в browser DevTools (F12 → Console) при нажатии "Продолжить" на slide 10
 
 ### Что требует внимания
 - `parent_pin` хранится plain text — TODO: хеширование (SHA256 или bcrypt)
 - `.expo/` попала в git — добавить в .gitignore
 - Onboarding использует локальные переводы (объект translations в index.tsx), а не @kakai/i18n — рассмотреть миграцию
 - User name и family name = '' после onboarding auth — заполняются позже в "Мой аккаунт"
-- Quiz selling flow не протестирован на реальном устройстве (web preview работает)
+- Quiz selling flow (18 шагов) реализован но не протестирован из-за бага auth выше — теперь можно тестить
 - Child app dev build запускается через `expo start --port 8082`
 
 ### Следующие шаги
-- Тестирование полного flow в web: onboarding → quiz → paywall
+- Тестирование полного flow в web: onboarding slide 10 → auth → slide 12 invite code → quiz → paywall
+- Проверить browser Console на ошибки при нажатии "Продолжить" (slide 10)
 - EAS development build для Android тестирования
 - Подключение Edge Functions к UI (approve-task, block-command)
 - Экран "Мой аккаунт" — добровольная привязка email/телефона + заполнение имени/семьи
