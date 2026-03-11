@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@kakai/api';
+import { INVITE_CODE_LENGTH } from '@kakai/shared';
 
 const { width: W, height: H } = Dimensions.get('window');
 const GREEN = '#2DB573';
@@ -454,7 +455,7 @@ function Slide9({ t, onAllow, onLater }: { t: T; onAllow: () => void; onLater: (
 
 // --- SLIDE 10 - Role Selection (unchanged - looks good) ---
 
-function Slide10({ t, role, setRole, onNext }: { t: T; role: 'parent' | 'child' | null; setRole: (r: 'parent' | 'child') => void; onNext: () => void }) {
+function Slide10({ t, role, setRole, onNext, loading }: { t: T; role: 'parent' | 'child' | null; setRole: (r: 'parent' | 'child') => void; onNext: () => void; loading?: boolean }) {
   function RoleCard({ value, label, sub }: { value: 'parent' | 'child'; label: string; sub: string }) {
     const active = role === value;
     return (
@@ -490,7 +491,7 @@ function Slide10({ t, role, setRole, onNext }: { t: T; role: 'parent' | 'child' 
         </View>
         <View style={{ flex: 1 }} />
         <View style={{ paddingBottom: 24 }}>
-          <GreenBtn label={t.continue} onPress={onNext} disabled={role === null} />
+          <GreenBtn label={loading ? '...' : t.continue} onPress={onNext} disabled={role === null || !!loading} />
         </View>
       </SafeAreaView>
     </BgImage>
@@ -714,11 +715,85 @@ export default function OnboardingIndex() {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
 
+  const [authLoading, setAuthLoading] = useState(false);
+
   const t = translations[lang];
   const go = (n: number) => setI(n);
   const next = () => setI((p) => Math.min(p + 1, SLIDE_COUNT - 1));
 
-  // Load invite code once (used by slides 12 & 13)
+  function generateInviteCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: INVITE_CODE_LENGTH }, () =>
+      chars[Math.floor(Math.random() * chars.length)]
+    ).join('');
+  }
+
+  // Called when user selects "Parent" role and taps Continue on slide 10
+  async function handleRoleNext() {
+    if (selectedRole !== 'parent') { next(); return; }
+
+    // Check if already authenticated (e.g. user went back and forward)
+    const { data: { session: existing } } = await supabase.auth.getSession();
+    if (existing) {
+      // Already have session — check if family exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('family_id')
+        .eq('id', existing.user.id)
+        .maybeSingle();
+      if (existingUser?.family_id) {
+        setFamilyId(existingUser.family_id);
+        next();
+        return;
+      }
+    }
+
+    setAuthLoading(true);
+    try {
+      // 1. Anonymous Auth
+      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+      if (authError || !authData.user) {
+        Alert.alert('Error', authError?.message ?? 'Auth failed');
+        return;
+      }
+
+      // 2. Create user record
+      const { error: userError } = await supabase.from('users').insert({
+        id: authData.user.id,
+        role: 'parent',
+        name: '',
+        lang: (lang === 'en' ? 'ru' : lang) as 'ru' | 'kz',
+      });
+      if (userError) {
+        Alert.alert('Error', userError.message);
+        return;
+      }
+
+      // 3. Create family with invite code
+      const code = generateInviteCode();
+      const { data: family, error: familyError } = await supabase
+        .from('families')
+        .insert({ name: '', invite_code: code, parent_id: authData.user.id, status: 'pending' })
+        .select('id')
+        .single();
+      if (familyError || !family) {
+        Alert.alert('Error', familyError?.message ?? 'Family creation failed');
+        return;
+      }
+
+      // 4. Link user to family
+      await supabase.from('users').update({ family_id: family.id }).eq('id', authData.user.id);
+
+      // 5. Set state so slides 12/13 have invite code
+      setFamilyId(family.id);
+      setInviteCode(code.length === 6 ? `${code.slice(0, 3)}-${code.slice(3)}` : code);
+      next();
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  // Load invite code on mount if session already exists (e.g. app restart mid-onboarding)
   useEffect(() => {
     async function loadInviteCode() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -791,7 +866,7 @@ export default function OnboardingIndex() {
       {i === 7 && <Slide7 t={t} onSelect={(v) => { setSurveySource(v); next(); }} onSkip={next} />}
       {i === 8 && <Slide8 t={t} onNext={next} />}
       {i === 9 && <Slide9 t={t} onAllow={next} onLater={next} />}
-      {i === 10 && <Slide10 t={t} role={selectedRole} setRole={setSelectedRole} onNext={next} />}
+      {i === 10 && <Slide10 t={t} role={selectedRole} setRole={setSelectedRole} onNext={handleRoleNext} loading={authLoading} />}
       {i === 11 && <Slide11 t={t} onNext={next} onBack={() => go(10)} />}
       {i === 12 && <Slide12 t={t} inviteCode={inviteCode} onOther={() => go(13)} onBack={() => go(11)} />}
       {i === 13 && <Slide13 t={t} inviteCode={inviteCode} onBack={() => go(12)} onHelp={() => Alert.alert(t.getHelp, t.helpInstructions)} />}
