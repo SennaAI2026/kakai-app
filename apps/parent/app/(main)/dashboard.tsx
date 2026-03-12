@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, Image,
   ScrollView, RefreshControl, Alert, Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -493,7 +493,7 @@ export default function DashboardScreen() {
         ) : (
           /* No children connected */
           <View style={s.emptyWrap}>
-            <Text style={s.emptyEmoji}>👧</Text>
+            <Image source={require('../../assets/giraffe_welcome.png')} style={s.emptyImg} resizeMode="contain" />
             <Text style={s.emptyText}>{t('parent.home.noChildrenDesc')}</Text>
             {family && (
               <>
@@ -527,7 +527,7 @@ const s = StyleSheet.create({
   childTabText: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
   childTabTextActive: { color: '#1B7A45' },
   body: { flex: 1, backgroundColor: '#EEF1F5', borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -12 },
-  bodyContent: { paddingTop: 20, paddingBottom: 16 },
+  bodyContent: { paddingTop: 20, paddingBottom: 100 },
   card: { backgroundColor: 'white', borderRadius: 16, marginHorizontal: 20, marginBottom: 16, padding: 16, borderWidth: 1, borderColor: '#E5E7EB' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#374151', marginHorizontal: 20, marginBottom: 8, marginTop: 4 },
   limitCard: { borderColor: '#C8E8D5', borderWidth: 1.5 },
@@ -585,7 +585,7 @@ const s = StyleSheet.create({
   barDay: { fontSize: 11, color: '#6B7B6E', marginTop: 4 },
   barDayToday: { color: '#0FA968', fontWeight: '700' },
   emptyWrap: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 24 },
-  emptyEmoji: { fontSize: 64, marginBottom: 16 },
+  emptyImg: { width: 140, height: 140, marginBottom: 16 },
   emptyText: { fontSize: 16, color: '#6B7B6E', textAlign: 'center', marginBottom: 16 },
   emptyHint: { fontSize: 13, color: '#9CA3AF', marginBottom: 8 },
   emptyHintCode: { fontSize: 13, color: '#6B7B6E', marginBottom: 6 },

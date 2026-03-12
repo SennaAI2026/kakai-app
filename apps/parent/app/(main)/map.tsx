@@ -432,7 +432,7 @@ export default function MapScreen() {
           )
         ) : (
           <View style={s.emptyCard}>
-            <Text style={s.emptyEmoji}>👧</Text>
+            <Text style={s.emptyEmoji}>🦒</Text>
             <Text style={s.emptyTitle}>{t('parent.home.noChildrenDesc')}</Text>
           </View>
         )}

@@ -52,7 +52,7 @@ export default function MainLayout() {
         name="history"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📊" label="Статистика" focused={focused} />
+            <TabIcon emoji="📊" label="История" focused={focused} />
           ),
         }}
       />
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   tabLabel: {
-    fontSize: 10, textAlign: 'center', color: '#6B7B6E', lineHeight: 14,
+    fontSize: 11, textAlign: 'center', color: '#6B7B6E', lineHeight: 15,
   },
   tabLabelActive: { color: '#0FA968', fontWeight: '700' },
 });

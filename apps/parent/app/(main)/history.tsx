@@ -394,7 +394,7 @@ export default function HistoryScreen() {
           </>
         ) : (
           <View style={s.emptyWrap}>
-            <Text style={s.emptyEmoji}>👧</Text>
+            <Text style={s.emptyEmoji}>🦒</Text>
             <Text style={s.emptyText}>{t('parent.home.noChildrenDesc')}</Text>
           </View>
         )}
