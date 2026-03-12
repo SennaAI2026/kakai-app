@@ -9,6 +9,9 @@ export default function Index() {
 
   useEffect(() => {
     async function bootstrap() {
+      // DEBUG: skip straight to dashboard — REMOVE BEFORE PRODUCTION
+      // if (__DEV__) { setTimeout(() => router.replace('/(main)/dashboard'), 100); return; }
+
       // 1. Check onboarding
       const onboardingDone = await AsyncStorage.getItem('onboarding_complete');
       if (onboardingDone !== 'true') {
