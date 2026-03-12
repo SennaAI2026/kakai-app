@@ -52,7 +52,7 @@
     "pinMismatch": "PIN codes don't match",
     "pinWrong": "Wrong PIN code",
     "inviteCode": "Invite Code",
-    "inviteCodePlaceholder": "XXXXXX",
+    "inviteCodePlaceholder": "000-000",
     "inviteCodeInvalid": "Invalid invite code",
     "joinFamily": "Join Family",
     "inviteCodeHint": "Ask your parent for the code from the Kakai app",

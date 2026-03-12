@@ -38,7 +38,7 @@ export default function ChildMainLayout() {
         name="settings"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🦊" label="Профиль" focused={focused} />
+            <TabIcon emoji="🦒" label="Профиль" focused={focused} />
           ),
         }}
       />

@@ -15,7 +15,7 @@ import type { UsageStat } from 'kakai-blocker';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨'];
+const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -245,7 +245,7 @@ export default function HomeScreen() {
   const usedPct   = limit > 0 ? Math.min(1, used / limit) : 0;
   const isBlocked = (timeRow?.is_blocked ?? false) || (remaining === 0 && used > 0);
 
-  const avatarEmoji  = AVATARS[user?.avatar_index ?? 0] ?? '🦊';
+  const avatarEmoji  = AVATARS[user?.avatar_index ?? 0] ?? '🦒';
   const pendingCount = tasks.filter((t) => t.status === 'pending').length;
 
   const cardTranslateY = cardAnim.interpolate({

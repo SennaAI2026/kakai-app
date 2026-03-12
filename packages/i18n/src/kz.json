@@ -51,7 +51,7 @@
     "pinMismatch": "PIN-кодтар сәйкес келмейді",
     "pinWrong": "Қате PIN-код",
     "inviteCode": "Шақыру коды",
-    "inviteCodePlaceholder": "XXXXXX",
+    "inviteCodePlaceholder": "000-000",
     "inviteCodeInvalid": "Шақыру коды жарамсыз",
     "joinFamily": "Отбасыға қосылу",
     "inviteCodeHint": "Kakai қосымшасынан ата-анадан кодты сұраңыз",

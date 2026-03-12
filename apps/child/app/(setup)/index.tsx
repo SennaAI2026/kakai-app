@@ -7,7 +7,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '@kakai/api';
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨'];
+const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
 const AGES = Array.from({ length: 13 }, (_, i) => i + 5); // 5–17
 
 export default function SetupIndex() {
@@ -91,11 +91,11 @@ export default function SetupIndex() {
               <Animated.Text
                 style={[s.mascot, { transform: [{ scale: mascotScale }], opacity: mascotOpacity }]}
               >
-                🦊
+                🦒
               </Animated.Text>
               <View style={s.bubble}>
                 <Text style={s.bubbleText}>
-                  Привет! Я Лисёнок Кикас 👋{'\n'}
+                  Привет! Я Жирафик Какай 👋{'\n'}
                   Давай настроим твой телефон вместе!
                 </Text>
               </View>

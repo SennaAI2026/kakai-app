@@ -51,7 +51,7 @@
     "pinMismatch": "PIN-коды не совпадают",
     "pinWrong": "Неверный PIN-код",
     "inviteCode": "Код приглашения",
-    "inviteCodePlaceholder": "XXXXXX",
+    "inviteCodePlaceholder": "000-000",
     "inviteCodeInvalid": "Неверный код приглашения",
     "joinFamily": "Присоединиться к семье",
     "inviteCodeHint": "Попросите код у родителя из приложения Kakai",

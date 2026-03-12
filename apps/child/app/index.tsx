@@ -22,7 +22,7 @@ export default function Index() {
         .maybeSingle();
 
       if (!user?.name) {
-        router.replace('/(setup)/welcome');
+        router.replace('/(setup)/');
       } else {
         router.replace('/(main)/home');
       }

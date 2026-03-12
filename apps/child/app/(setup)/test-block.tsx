@@ -57,7 +57,7 @@ export default function TestBlockScreen() {
       </View>
 
       <View style={s.content}>
-        <Text style={s.mascot}>🦊</Text>
+        <Text style={s.mascot}>🦒</Text>
         <Text style={s.title}>
           {allGranted ? 'Всё готово!' : 'Проверка разрешений'}
         </Text>

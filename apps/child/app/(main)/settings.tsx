@@ -16,7 +16,7 @@ type TimeRow = Pick<ScreenTime, 'daily_limit_minutes' | 'used_minutes' | 'bonus_
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨'];
+const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
 const PAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'] as const;
 
 function todayISO() {
@@ -252,7 +252,7 @@ export default function ChildSettingsScreen() {
   }
 
   // Derived
-  const avatarEmoji  = AVATARS[user?.avatar_index ?? 0] ?? '🦊';
+  const avatarEmoji  = AVATARS[user?.avatar_index ?? 0] ?? '🦒';
   const limit        = timeRow?.daily_limit_minutes ?? 0;
   const used         = timeRow?.used_minutes        ?? 0;
   const bonus        = timeRow?.bonus_minutes       ?? 0;
@@ -262,7 +262,7 @@ export default function ChildSettingsScreen() {
     <View style={s.root}>
       {/* Header */}
       <View style={s.header}>
-        <Text style={s.headerTitle}>🦊 Профиль</Text>
+        <Text style={s.headerTitle}>🦒 Профиль</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
