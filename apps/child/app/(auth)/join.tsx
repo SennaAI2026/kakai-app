@@ -57,7 +57,19 @@ export default function JoinScreen() {
       return;
     }
 
-    // 4. Initialize screen_time for child
+    // 4. Link child to family — triggers parent Realtime on families.child_id
+    const { error: linkError } = await supabase
+      .from('families')
+      .update({ child_id: authData.user.id, status: 'active' })
+      .eq('id', family.id);
+
+    if (linkError) {
+      Alert.alert(t('common.error'), linkError.message);
+      setLoading(false);
+      return;
+    }
+
+    // 5. Initialize screen_time for child
     await supabase.from('screen_time').insert({
       child_id: authData.user.id,
       balance_minutes: 0,
