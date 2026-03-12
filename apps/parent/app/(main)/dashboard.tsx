@@ -366,7 +366,7 @@ export default function DashboardScreen() {
 
               {/* Feedback banner */}
               <TouchableOpacity style={s.banner} activeOpacity={0.8}>
-                <Image source={require('../../assets/giraffe_banner.png.png')} style={s.bannerImg} />
+                <Image source={require('../../assets/giraffe_banner.png')} style={s.bannerImg} />
                 <View style={s.bannerInfo}>
                   <Text style={s.bannerTitle}>Поделитесь мнением{'\n'}о приложении</Text>
                   <Text style={s.bannerSub}>Нам нужна ваша помощь</Text>
