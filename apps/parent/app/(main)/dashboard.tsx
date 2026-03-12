@@ -138,33 +138,31 @@ export default function DashboardScreen() {
     if (childrenData?.length) {
       const kids = childrenData as User[];
       setChildren(kids);
-      const first = kids[0];
-      setSelectedChild((prev) => prev ?? first);
-      await loadChildData(first.id, userData.family_id);
+      setSelectedChild((prev) => prev ?? kids[0]);
     }
-  }, [loadChildData]);
+  }, []);
 
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // Load child-specific data whenever selection or family changes
   useEffect(() => {
-    loadData();
+    if (selectedChild && family) loadChildData(selectedChild.id, family.id);
+  }, [selectedChild, family, loadChildData]);
 
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-
-    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
-      if (!authUser) return;
-      const reload = () => {
-        if (!selectedChild) return;
-        supabase.from('users').select('family_id').eq('id', authUser.id).maybeSingle()
-          .then(({ data }) => { if (data?.family_id && selectedChild) loadChildData(selectedChild.id, data.family_id); });
-      };
-      channel = supabase
-        .channel('parent-dashboard')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, reload)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'screen_time' }, reload)
-        .subscribe();
-    });
-
-    return () => { if (channel) supabase.removeChannel(channel); };
-  }, [loadData, loadChildData, selectedChild]);
+  // Realtime subscriptions — reload child data on DB changes
+  useEffect(() => {
+    if (!selectedChild || !family) return;
+    const channel = supabase
+      .channel('parent-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+        loadChildData(selectedChild.id, family.id);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'screen_time' }, () => {
+        loadChildData(selectedChild.id, family.id);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedChild, family, loadChildData]);
 
   async function onRefresh() {
     setRefreshing(true);
@@ -172,8 +170,7 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }
 
-  async function selectChild(child: User) {
-    setSelectedChild(child);
+  function selectChild(child: User) {
     setScreenTime(null);
     setPendingTasks([]);
     setAllowedApps([]);
@@ -181,7 +178,7 @@ export default function DashboardScreen() {
     setSchedules([]);
     setGps(null);
     setWeekLogs([]);
-    if (family) await loadChildData(child.id, family.id);
+    setSelectedChild(child); // triggers useEffect → loadChildData
   }
 
   async function toggleBlock(value: boolean) {
