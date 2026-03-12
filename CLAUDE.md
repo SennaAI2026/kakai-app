@@ -1,4 +1,62 @@
-# CLAUDE.md — Kakai Project Rules
+# Kakai v2 — CLAUDE.md (Updated 13 March 2026, 01:00 AM)
+
+## Current State
+- **Branch:** main
+- **Last commit:** 27eb284 (fix: paywall routes to dashboard instead of double-registration)
+- **Previous commits this session:** 6229d00 (fix P0 join.tsx + lang CHECK), 58f7b88 (disable DEBUG skip)
+
+## What was accomplished (12-13 March night session):
+1. Full project audit — code + DB schema analysis
+2. **P0 FIX:** join.tsx now updates `families.child_id` + `status = 'active'` on child join (commit 6229d00)
+3. **P0 FIX:** Paywall routes to `/(main)/dashboard` instead of `/(auth)/register` — prevents double anonymous registration (commit 27eb284)
+4. **Migration 006** created: `lang CHECK` now includes 'en' (applied in Supabase)
+5. **DEBUG skip line** commented out in parent/index.tsx (commit 58f7b88)
+6. **Supabase Realtime** enabled for `families`, `screen_time`, `tasks` tables
+7. **RLS duplicate policies** cleaned (14 policies dropped)
+8. **DB cleaned** — all test data removed, fresh start
+9. **Full Flow 3 test passed:**
+   - Parent onboarding slides 1-13 ✅
+   - Invite code generated and displayed ✅
+   - Child joined via Expo Go on Android ✅
+   - **Realtime worked** — slide 13 auto-advanced to 14 ✅
+   - Slide 14 → 15 → quiz navigation works ✅
+   - Quiz page renders at /quiz but **UI may be blank/broken in browser** — needs investigation
+
+## Known Issues
+| # | Issue | Severity | Status |
+|---|-------|----------|--------|
+| 1 | Quiz screen appears blank in browser (/quiz loads but nothing visible) | HIGH | Investigate next session |
+| 2 | avatar_index vs avatar_id column name mismatch | P2 | Verify live DB column |
+| 3 | Onboarding uses local translations, not @kakai/i18n | P2 | Migrate later |
+| 4 | No giraffe assets in child app | LOW | Add when doing child UI |
+| 5 | Supabase anon key hardcoded as fallback | LOW | Fix before production |
+| 6 | console.log in supabase.ts | LOW | Remove before production |
+
+## DB State
+- All tables clean (0 rows) — except test data from latest flow test
+- Realtime publication: families, screen_time, tasks
+- Migration 006 (lang CHECK 'en') applied
+- RLS duplicates cleaned
+
+## Real DB Schema (differs from docs)
+- `users.family_id` exists (FK → families) — not in original docs
+- `users.avatar_index` (not `avatar_id`) — mismatch with migration naming
+- `users.pin_hash` exists — but `families.parent_pin` also exists
+- `users.email/phone` NOT in public.users — lives in auth.users (correct for Anonymous Auth)
+- `users.survey_source` NOT created yet
+- `lang CHECK` now includes 'kz', 'ru', 'en'
+
+## Next Session Priority
+1. **Debug quiz screen** — why blank in browser? Check rendering, scroll, container height
+2. **Complete quiz → paywall → dashboard flow** in browser
+3. **Verify dashboard shows child data** after full flow
+4. Then: UI improvements screen by screen (dashboard first per Senna's plan)
+
+## Development Setup
+- Parent: `cd apps/parent && npx expo start` (port 8081) → browser localhost:8081
+- Child: `cd apps/child && npx expo start --port 8082` → Android Expo Go
+- iPhone: blocked (Expo Go SDK 54 vs project SDK 52)
+- Supabase: nhgcollyiqyexunvwywt, migrations 001-006 applied
 
 ## Проект
 **Kakai.kz** — абсолютный аналог Kids360 для казахстанского рынка. Родительский контроль.
@@ -28,9 +86,9 @@ kakai-app/
 │       └── modules/kakai-blocker/  ← 6 Kotlin файлов
 ├── packages/
 │   ├── api/             ← Supabase client
-│   ├── i18n/            ← kz.json + ru.json
+│   ├── i18n/            ← kz.json + ru.json + en.json
 │   └── shared/          ← types.ts, constants.ts
-├── supabase/            ← migrations, functions
+├── supabase/            ← migrations (001-006), functions
 └── docs/
 
 ## Kotlin Native Module (kakai-blocker)
@@ -52,10 +110,11 @@ kakai-app/
 
 ### База данных
 - `families.parent_id` — НЕ owner_id
-- `email` и `phone` в users — NULLABLE
+- `email` и `phone` в users — NULLABLE (lives in auth.users)
 - Supabase URL: `nhgcollyiqyexunvwywt`
 - Часовой пояс: UTC+5 (единый для всего KZ с 01.03.2024)
 - Все таблицы с RLS
+- `lang CHECK` includes 'kz', 'ru', 'en' (migration 006)
 
 ### Блокировка (offline-first)
 - Правила блокировки хранятся в SharedPreferences
@@ -110,43 +169,12 @@ kakai-app/
 - Freemium: бесплатно (статистика+задания+GPS) / платно (блокировка+расписание)
 - Наши преимущества: переключатель языка, фото-доказательство заданий, offline-first, Realtime sync
 
-## Текущий статус
-
-### Последний коммит
-`da8edbc` — fix: auth before family lookup in join + numeric invite codes (2026-03-11)
-
-### Что готово
-- **Монорепо:** полностью настроена (yarn workspaces, 2 apps + 3 packages)
-- **Anonymous Auth:** включен в Supabase Dashboard + внедрён в обоих приложениях
-  - Parent onboarding slide 10 (role select) — signInAnonymously() + создаёт user + family + invite_code (6 цифр, формат XXX-XXX). Сессия готова к slide 12/13
-  - Parent `register.tsx` — альтернативный вход: имя + название семьи → anonymous sign-in → create user + family
-  - Child `join.tsx` — signInAnonymously() ПЕРЕД поиском family (RLS требует JWT) → invite code → create child user
-  - Parent `login.tsx` — оставлен для добровольного email-логина (кто привязал email в настройках)
-- **RLS:** миграция 002 применена — 17 policies для users, families, screen_time, tasks. Миграция 001 — 10 policies для app_rules, schedules, usage_logs, gps_locations, subscriptions. Итого 27 policies на 9 таблиц
-- **Invite code:** 6 цифр (формат XXX-XXX). Генерация в register.tsx и onboarding/index.tsx. join.tsx принимает с/без дефиса, number-pad клавиатура
-- **Parent app onboarding:** 15 slides (SLIDE_COUNT=15) — feature slides, survey, rating, push, role select (+ auth), stepper, send link (Share Sheet), invite code display, waiting screen с giraffe_waiting_setup.png + paywall. Realtime подписка на families (slides 12-13 → auto go(14) при подключении ребёнка). Web errors через window.alert (showError helper)
-- **Quiz selling flow:** 18 шагов в `quiz.tsx` — success, multi-select целей, персонализация, 5 quiz Да/Нет с empathy, feature-экраны (статистика, задания, блокировка, GPS, расписание, интернет-фильтр), social proof, сравнение, animated loading → paywall. Переводы ru/kz/en. Slide 14 → quiz → paywall
-- **Parent app main:** dashboard, tasks, history, map, schedule, more, модал app-rules
-- **Child app setup:** 10 экранов — welcome/avatar/name/age (index.tsx), usage-stats, accessibility, overlay, device-admin, battery, gps, pin, schedule, test-block
-- **Child app main:** home (с Realtime blocking sync), settings, more
-- **Blocking end-to-end sync:** Realtime на screen_time.is_blocked + app_rules, initial sync при mount
-- **Kotlin kakai-blocker:** все 6 файлов. JS API: setBlockingEnabled, setBlockedApps, getBlockedApps, isBlockingEnabled + permissions + usage stats
-- **Supabase:** 2 миграции (001 schema + 002 RLS), 4 Edge Functions (approve-task, sync-usage, block-command, reset-daily). БД очищена — чистый старт, 0 записей
-- **i18n:** ru.json + kz.json + en.json полные, автодетект locale
-- **Env:** .env файлы в обоих apps с Supabase credentials
-- **Build:** EAS настроен, app.json v2.0.0, оба package name (kz.kakai.parent / kz.kakai.child), ассеты icon/splash/adaptive-icon на месте
-
-### Что требует внимания
-- `parent_pin` хранится plain text — TODO: хеширование (SHA256 или bcrypt)
-- `.expo/` попала в git — добавить в .gitignore
-- Onboarding использует локальные переводы (объект translations в index.tsx), а не @kakai/i18n — рассмотреть миграцию
-- User name и family name = '' после onboarding auth — заполняются позже в "Мой аккаунт"
-- `console.log('[Onboarding] ...')` в handleRoleNext() — диагностика, можно убрать после стабилизации
-- Child app dev build: `expo start --port 8082`
-
-### Следующие шаги
-- Тестирование полного flow: parent onboarding → invite code → child join → quiz → paywall
-- EAS development build для Android тестирования
-- Подключение Edge Functions к UI (approve-task, block-command)
-- Экран "Мой аккаунт" — добровольная привязка email/телефона + заполнение имени/семьи
-- Миграция локальных переводов onboarding → @kakai/i18n
+## Key Rules (always)
+- Mascot = Giraffe 🦒 (NOT fox, NOT panda)
+- Auth = Anonymous first, email/phone voluntary later in "Мой аккаунт"
+- families.parent_id (NOT owner_id)
+- Always check Kids360 screenshots before implementing UI
+- 4 source-of-truth files in Claude Project
+- Design before code — discuss with Senna, get approval, then implement
+- Don't ask Senna what you can check via terminal
+- Frequent commits = good practice
