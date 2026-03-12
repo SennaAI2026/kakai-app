@@ -41,18 +41,18 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="schedule"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📅" label="Режим" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="history"
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon emoji="📊" label="История" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="📍" label="Карта" focused={focused} />
           ),
         }}
       />
@@ -65,7 +65,7 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="map"
+        name="schedule"
         options={{ href: null }}
       />
     </Tabs>

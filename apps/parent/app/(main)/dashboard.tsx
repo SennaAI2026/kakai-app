@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Image,
-  ScrollView, RefreshControl, Alert, Switch,
+  ScrollView, RefreshControl, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@kakai/api';
@@ -19,7 +19,6 @@ interface GpsRow { lat: number; lng: number; accuracy: number | null; created_at
 interface LogRow { date: string; minutes: number }
 
 const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
-const ADD_OPTIONS = [15, 30, 60];
 const DAY_LABELS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
 function minsToHM(mins: number): string {
@@ -38,18 +37,28 @@ function getLast7Days(): string[] {
   });
 }
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'только что';
-  if (mins < 60) return `${mins} мин назад`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}ч назад`;
-  return `${Math.floor(hrs / 24)}д назад`;
+// ─── Section card helper ────────────────────────────────────────────────────
+
+function SectionRow({ emoji, title, count, onPress, children }: {
+  emoji: string; title: string; count?: number; onPress?: () => void; children?: React.ReactNode;
+}) {
+  return (
+    <TouchableOpacity style={s.section} onPress={onPress} activeOpacity={onPress ? 0.7 : 1} disabled={!onPress}>
+      <View style={s.sectionHeader}>
+        <Text style={s.sectionEmoji}>{emoji}</Text>
+        <Text style={s.sectionTitle}>{title}</Text>
+        {(count ?? 0) > 0 && (
+          <View style={s.sectionBadge}><Text style={s.sectionBadgeText}>{count}</Text></View>
+        )}
+        <View style={{ flex: 1 }} />
+        {onPress && <Text style={s.sectionChevron}>›</Text>}
+      </View>
+      {children}
+    </TouchableOpacity>
+  );
 }
 
-function Card({ children, style }: { children: React.ReactNode; style?: any }) { return <View style={[s.card, style]}>{children}</View>; }
-function SectionTitle({ emoji, text }: { emoji: string; text: string }) { return <Text style={s.sectionTitle}>{emoji} {text}</Text>; }
+// ─── Main component ─────────────────────────────────────────────────────────
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -58,12 +67,16 @@ export default function DashboardScreen() {
   const [selectedChild, setSelectedChild] = useState<User | null>(null);
   const [screenTime, setScreenTime] = useState<ScreenTimeRow | null>(null);
   const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
-  const [allowedApps, setAllowedApps] = useState<AppRuleRow[]>([]);
-  const [blockedApps, setBlockedApps] = useState<AppRuleRow[]>([]);
+  const [allRules, setAllRules] = useState<AppRuleRow[]>([]);
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
   const [gps, setGps] = useState<GpsRow | null>(null);
   const [weekLogs, setWeekLogs] = useState<LogRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Derived from allRules — no extra queries
+  const limitedApps = allRules.filter((r) => r.category === 'limited');
+  const allowedApps = allRules.filter((r) => r.category === 'always');
+  const blockedApps = allRules.filter((r) => r.category === 'blocked');
 
   const loadChildData = useCallback(async (childId: string, familyId: string) => {
     const [
@@ -110,11 +123,7 @@ export default function DashboardScreen() {
 
     if (timeData) setScreenTime(timeData as ScreenTimeRow);
     if (tasksData) setPendingTasks(tasksData as Task[]);
-
-    const rules = (rulesData as AppRuleRow[]) ?? [];
-    setAllowedApps(rules.filter((r) => r.category === 'always'));
-    setBlockedApps(rules.filter((r) => r.category === 'blocked'));
-
+    setAllRules((rulesData as AppRuleRow[]) ?? []);
     setSchedules((schedData as ScheduleRow[]) ?? []);
     setGps(gpsData as GpsRow | null);
     setWeekLogs((logsData as LogRow[]) ?? []);
@@ -144,12 +153,10 @@ export default function DashboardScreen() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Load child-specific data whenever selection or family changes
   useEffect(() => {
     if (selectedChild && family) loadChildData(selectedChild.id, family.id);
   }, [selectedChild, family, loadChildData]);
 
-  // Realtime subscriptions — reload child data on DB changes
   useEffect(() => {
     if (!selectedChild || !family) return;
     const channel = supabase
@@ -173,12 +180,11 @@ export default function DashboardScreen() {
   function selectChild(child: User) {
     setScreenTime(null);
     setPendingTasks([]);
-    setAllowedApps([]);
-    setBlockedApps([]);
+    setAllRules([]);
     setSchedules([]);
     setGps(null);
     setWeekLogs([]);
-    setSelectedChild(child); // triggers useEffect → loadChildData
+    setSelectedChild(child);
   }
 
   async function toggleBlock(value: boolean) {
@@ -187,18 +193,6 @@ export default function DashboardScreen() {
       .from('screen_time').update({ is_blocked: value }).eq('id', screenTime.id);
     if (error) Alert.alert(t('common.error'), error.message);
     else setScreenTime({ ...screenTime, is_blocked: value });
-  }
-
-  async function addTime(minutes: number) {
-    if (!screenTime) return;
-    const newBalance = (screenTime.balance_minutes ?? 0) + minutes;
-    const { error } = await supabase
-      .from('screen_time').update({ balance_minutes: newBalance }).eq('id', screenTime.id);
-    if (error) Alert.alert(t('common.error'), error.message);
-    else {
-      setScreenTime({ ...screenTime, balance_minutes: newBalance });
-      Alert.alert('✅', `+${minutes} ${t('common.minutes')}`);
-    }
   }
 
   async function approveTask(taskId: string) {
@@ -213,15 +207,15 @@ export default function DashboardScreen() {
     }
   }
 
+  // ── Derived ─────────────────────────────────────────────────────────────
+
   const used = screenTime?.used_today ?? 0;
   const limit = screenTime?.daily_limit ?? DEFAULT_DAILY_LIMIT;
-  const balance = screenTime?.balance_minutes ?? 0;
-  const remaining = Math.max(0, limit - used + balance);
-  const usedPct = Math.min(1, used / limit);
-  const avatarEmoji = AVATARS[selectedChild?.avatar_index ?? 0] ?? '🦒';
   const isBlocked = screenTime?.is_blocked ?? false;
+  const avatarEmoji = AVATARS[selectedChild?.avatar_index ?? 0] ?? '🦒';
+  const activeSchedules = schedules.filter((sc) => sc.is_active);
+  const schoolSchedule = activeSchedules.find((sc) => sc.type === 'school');
 
-  // Weekly chart data
   const days = getLast7Days();
   const daySums = days.map((date) => ({
     date,
@@ -229,279 +223,279 @@ export default function DashboardScreen() {
   }));
   const maxMins = Math.max(...daySums.map((d) => d.total), 60);
 
-  const activeSchedules = schedules.filter((sc) => sc.is_active);
+  const now = new Date();
+  const updatedStr = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()}`;
+
+  // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <View style={s.container}>
-      {/* Green header — simulated gradient */}
-      <View style={s.headerBg}>
-        <View style={s.headerOverlay} />
-        <View style={s.headerContent}>
-          <View>
-            <Text style={s.appTitle}>Kakai</Text>
-            {family && <Text style={s.familyName}>{family.name}</Text>}
-          </View>
-          {(screenTime?.streak_days ?? 0) > 0 && (
-            <View style={s.streakBadge}>
-              <Text style={s.streakText}>🔥 {screenTime!.streak_days} {t('common.days')}</Text>
+    <View style={s.root}>
+      {/* ── GREEN HEADER ──────────────────────────────────────────── */}
+      <View style={s.header}>
+        <View style={s.headerGradTop} />
+        <View style={s.headerInner}>
+          {/* Top row: mascot + name | refresh */}
+          <View style={s.headerRow}>
+            <View style={s.headerLeft}>
+              <Image source={require('../../assets/giraffe_mascot_clean.png')} style={s.mascot} />
+              <View>
+                <View style={s.nameRow}>
+                  <Text style={s.headerName}>{selectedChild?.name ?? 'Kakai'}</Text>
+                  <Text style={s.headerChevron}>›</Text>
+                </View>
+                <View style={s.statusRow}>
+                  <Text style={s.statusText}>🔋 70%</Text>
+                  <Text style={s.statusText}>🔇 Без звука</Text>
+                </View>
+              </View>
             </View>
+            <View style={s.headerRight}>
+              <Text style={s.updatedText}>Данные обновлены{'\n'}{updatedStr}</Text>
+              <TouchableOpacity onPress={onRefresh} activeOpacity={0.7} style={s.refreshBtn}>
+                <Text style={s.refreshIcon}>↻</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Child selector: avatar circles */}
+          {children.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.avatarRow}>
+              {children.map((child) => {
+                const active = selectedChild?.id === child.id;
+                return (
+                  <TouchableOpacity key={child.id} onPress={() => selectChild(child)} activeOpacity={0.8}>
+                    <View style={[s.avatarCircle, active && s.avatarCircleActive]}>
+                      <Text style={s.avatarEmoji}>{AVATARS[child.avatar_index ?? 0]}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           )}
         </View>
-
-        {/* Child selector pills */}
-        {children.length > 1 && (
-          <ScrollView
-            horizontal showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.childRow}
-          >
-            {children.map((child) => (
-              <TouchableOpacity
-                key={child.id}
-                style={[s.childTab, selectedChild?.id === child.id && s.childTabActive]}
-                onPress={() => selectChild(child)}
-                activeOpacity={0.8}
-              >
-                <Text style={[s.childTabText, selectedChild?.id === child.id && s.childTabTextActive]}>
-                  {AVATARS[child.avatar_index ?? 0]} {child.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
       </View>
 
-      {/* Body — bottom-sheet style */}
+      {/* ── SCROLL BODY ───────────────────────────────────────────── */}
       <ScrollView
-        style={s.body}
+        style={s.scroll}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0FA968" />}
-        contentContainerStyle={s.bodyContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2DB573" />}
+        contentContainerStyle={s.scrollContent}
       >
         {selectedChild ? (
           <>
-            {/* ① Лимит на развлечения */}
-            <Card style={s.limitCard}>
-              <View style={s.limitTop}>
-                <View style={s.limitChildInfo}>
-                  <Text style={s.limitAvatar}>{avatarEmoji}</Text>
-                  <View>
-                    <Text style={s.limitChildName}>{selectedChild.name}</Text>
-                    {selectedChild.age ? <Text style={s.limitChildAge}>{selectedChild.age} лет</Text> : null}
+            {/* ── MAIN CARD: Лимит на развлечения ──────────────── */}
+            <View style={s.mainCard}>
+              <TouchableOpacity
+                style={s.mainCardHeader}
+                onPress={() => router.push({ pathname: '/modals/app-rules', params: { childId: selectedChild.id } })}
+                activeOpacity={0.7}
+              >
+                <Text style={s.mainCardTitle}>Лимит на развлечения</Text>
+                {limitedApps.length > 0 && (
+                  <View style={s.greenBadge}>
+                    <Text style={s.greenBadgeText}>{limitedApps.length}</Text>
                   </View>
+                )}
+                <View style={{ flex: 1 }} />
+                <Text style={s.mainCardChevron}>›</Text>
+              </TouchableOpacity>
+
+              <Text style={s.mainCardDesc}>Общий лимит для игр, видео, соц. сетей...</Text>
+
+              {/* Limited app list */}
+              {limitedApps.slice(0, 4).map((app) => (
+                <View key={app.id} style={s.limitedRow}>
+                  <Text style={s.limitedIcon}>📱</Text>
+                  <Text style={s.limitedName} numberOfLines={1}>{app.app_name ?? app.package_name}</Text>
                 </View>
-                <View style={s.blockToggle}>
-                  <Text style={s.blockIcon}>{isBlocked ? '🔒' : '🔓'}</Text>
-                  <Switch
-                    value={isBlocked}
-                    onValueChange={toggleBlock}
-                    trackColor={{ false: '#D1D5DB', true: '#EF4444' }}
-                    thumbColor="white"
-                  />
+              ))}
+
+              {/* Timer section */}
+              <View style={s.timerBox}>
+                <View style={s.timerDot}>
+                  <Text style={s.timerDotText}>⏱</Text>
                 </View>
+                <Text style={s.timerValue}>{minsToHM(used)} из {minsToHM(limit)}</Text>
+                <View style={{ flex: 1 }} />
+                <TouchableOpacity activeOpacity={0.7}>
+                  <Text style={s.timerEdit}>Изменить лимит</Text>
+                </TouchableOpacity>
               </View>
 
-              {isBlocked ? (
-                <View style={s.blockedBanner}>
-                  <Text style={s.blockedTitle}>{t('child.home.blocked')}</Text>
-                  <Text style={s.blockedDesc}>Телефон заблокирован</Text>
-                </View>
-              ) : (
-                <>
-                  <Text style={s.remainingLabel}>{t('child.home.screenTimeLeft')}</Text>
-                  <Text style={s.remainingValue}>{minsToHM(remaining)}</Text>
+              {/* Active schedule note */}
+              {schoolSchedule && (
+                <Text style={s.schedNote}>
+                  Активно расписание «{schoolSchedule.label ?? 'Учёба'}» до {schoolSchedule.end_time}
+                </Text>
+              )}
 
-                  <View style={s.progressTrack}>
-                    <View style={[s.progressFill, { width: `${usedPct * 100}%` as any }]} />
-                  </View>
-                  <Text style={s.progressSub}>
-                    {used}{t('common.minutes')} / {limit}{t('common.minutes')}
-                  </Text>
+              {/* Block / Unblock button */}
+              <TouchableOpacity
+                style={[s.blockBtn, isBlocked && s.blockBtnActive]}
+                onPress={() => toggleBlock(!isBlocked)}
+                activeOpacity={0.8}
+              >
+                <Text style={[s.blockBtnText, isBlocked && s.blockBtnTextActive]}>
+                  {isBlocked ? '🔓 Разблокировать' : '🔒 Заблокировать'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-                  {/* Add time buttons */}
-                  <View style={s.addRow}>
-                    {ADD_OPTIONS.map((m) => (
-                      <TouchableOpacity key={m} style={s.addBtn} onPress={() => addTime(m)} activeOpacity={0.8}>
-                        <Text style={s.addBtnText}>+{m}</Text>
+            {/* ── BOTTOM SHEET VISUAL ──────────────────────────── */}
+            <View style={s.sheet}>
+              <View style={s.handle} />
+
+              {/* Pending tasks banner */}
+              {pendingTasks.length > 0 && (
+                <View style={s.tasksBanner}>
+                  <Text style={s.tasksBannerTitle}>⏳ Ждут проверки ({pendingTasks.length})</Text>
+                  {pendingTasks.slice(0, 3).map((task) => (
+                    <View key={task.id} style={s.taskRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.taskName} numberOfLines={1}>{task.title}</Text>
+                        <Text style={s.taskReward}>+{task.reward_minutes} {t('common.minutes')}</Text>
+                      </View>
+                      <TouchableOpacity style={s.taskApprove} onPress={() => approveTask(task.id)} activeOpacity={0.8}>
+                        <Text style={s.taskApproveText}>✓</Text>
                       </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Feedback banner */}
+              <TouchableOpacity style={s.banner} activeOpacity={0.8}>
+                <Image source={require('../../assets/giraffe_banner.png.png')} style={s.bannerImg} />
+                <View style={s.bannerInfo}>
+                  <Text style={s.bannerTitle}>Поделитесь мнением{'\n'}о приложении</Text>
+                  <Text style={s.bannerSub}>Нам нужна ваша помощь</Text>
+                </View>
+                <Text style={s.bannerChevron}>›</Text>
+              </TouchableOpacity>
+
+              <View style={s.gap} />
+
+              {/* a) Доступны всегда */}
+              <SectionRow
+                emoji="🔓" title="Доступны всегда" count={allowedApps.length}
+                onPress={() => router.push({ pathname: '/modals/app-rules', params: { childId: selectedChild.id } })}
+              >
+                {allowedApps.length > 0 ? (
+                  <View style={s.appChipRow}>
+                    {allowedApps.slice(0, 3).map((app) => (
+                      <View key={app.id} style={s.appChip}>
+                        <Text style={s.appChipText}>{app.app_name ?? app.package_name}</Text>
+                      </View>
+                    ))}
+                    {allowedApps.length > 3 && <Text style={s.appMore}>+{allowedApps.length - 3}</Text>}
+                  </View>
+                ) : (
+                  <Text style={s.sectionHint}>Нет разрешённых приложений</Text>
+                )}
+              </SectionRow>
+
+              <View style={s.gap} />
+
+              {/* b) Всегда заблокированы */}
+              <SectionRow
+                emoji="🔒" title="Всегда заблокированы"
+                onPress={() => router.push({ pathname: '/modals/app-rules', params: { childId: selectedChild.id } })}
+              >
+                {blockedApps.length > 0 ? (
+                  <View style={s.appChipRow}>
+                    {blockedApps.slice(0, 3).map((app) => (
+                      <View key={app.id} style={[s.appChip, s.appChipRed]}>
+                        <Text style={[s.appChipText, s.appChipTextRed]}>{app.app_name ?? app.package_name}</Text>
+                      </View>
                     ))}
                   </View>
-                </>
-              )}
-            </Card>
-
-            {/* ② Feedback banner — pending tasks */}
-            {pendingTasks.length > 0 && (
-              <>
-                <SectionTitle emoji="⏳" text={`Ждут проверки (${pendingTasks.length})`} />
-                {pendingTasks.map((task) => (
-                  <Card key={task.id} style={s.taskCard}>
-                    <View style={s.taskInfo}>
-                      <Text style={s.taskTitle} numberOfLines={1}>{task.title}</Text>
-                      <Text style={s.taskReward}>+{task.reward_minutes} {t('common.minutes')}</Text>
-                    </View>
-                    <TouchableOpacity style={s.approveBtn} onPress={() => approveTask(task.id)} activeOpacity={0.8}>
-                      <Text style={s.approveBtnText}>✓</Text>
+                ) : (
+                  <>
+                    <Text style={s.sectionHint}>Добавьте приложения, которые всегда заблокированы</Text>
+                    <TouchableOpacity
+                      style={s.dashedBtn}
+                      onPress={() => router.push({ pathname: '/modals/app-rules', params: { childId: selectedChild.id } })}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={s.dashedBtnText}>+ Добавить приложения</Text>
                     </TouchableOpacity>
-                  </Card>
-                ))}
-              </>
-            )}
+                  </>
+                )}
+              </SectionRow>
 
-            {/* ③ Доступны всегда */}
-            <SectionTitle emoji="✅" text="Доступны всегда" />
-            <Card>
-              {allowedApps.length > 0 ? (
-                <View style={s.appsWrap}>
-                  {allowedApps.slice(0, 6).map((app) => (
-                    <View key={app.id} style={s.appChip}>
-                      <Text style={s.appChipText}>{app.app_name ?? app.package_name}</Text>
-                    </View>
-                  ))}
-                  {allowedApps.length > 6 && (
-                    <Text style={s.appsMore}>+{allowedApps.length - 6}</Text>
-                  )}
-                </View>
-              ) : (
-                <Text style={s.emptyHint}>Нет разрешённых приложений</Text>
-              )}
-              <TouchableOpacity
-                style={s.manageBtn}
-                onPress={() => router.push({ pathname: '/modals/app-rules', params: { childId: selectedChild.id } })}
-                activeOpacity={0.8}
-              >
-                <Text style={s.manageBtnText}>Управлять →</Text>
-              </TouchableOpacity>
-            </Card>
+              <View style={s.gap} />
 
-            {/* ④ Всегда заблокированы */}
-            <SectionTitle emoji="🚫" text="Всегда заблокированы" />
-            <Card>
-              {blockedApps.length > 0 ? (
-                <View style={s.appsWrap}>
-                  {blockedApps.slice(0, 6).map((app) => (
-                    <View key={app.id} style={[s.appChip, s.appChipBlocked]}>
-                      <Text style={[s.appChipText, s.appChipTextBlocked]}>{app.app_name ?? app.package_name}</Text>
-                    </View>
-                  ))}
-                  {blockedApps.length > 6 && (
-                    <Text style={s.appsMore}>+{blockedApps.length - 6}</Text>
-                  )}
-                </View>
-              ) : (
-                <Text style={s.emptyHint}>Нет заблокированных приложений</Text>
-              )}
-              <TouchableOpacity
-                style={s.manageBtn}
-                onPress={() => router.push({ pathname: '/modals/app-rules', params: { childId: selectedChild.id } })}
-                activeOpacity={0.8}
-              >
-                <Text style={s.manageBtnText}>Управлять →</Text>
-              </TouchableOpacity>
-            </Card>
-
-            {/* ⑤ Блокировать по расписанию */}
-            <SectionTitle emoji="📅" text="Расписание блокировки" />
-            <Card>
-              {activeSchedules.length > 0 ? (
-                activeSchedules.map((sc) => (
-                  <View key={sc.id} style={s.schedRow}>
-                    <Text style={s.schedIcon}>
-                      {sc.type === 'sleep' ? '🌙' : sc.type === 'school' ? '🏫' : '⏰'}
-                    </Text>
-                    <View style={s.schedInfo}>
-                      <Text style={s.schedLabel}>{sc.label ?? sc.type}</Text>
-                      <Text style={s.schedTime}>{sc.start_time} – {sc.end_time}</Text>
-                    </View>
-                    <View style={s.schedBadge}>
-                      <Text style={s.schedBadgeText}>Активно</Text>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={s.emptyHint}>Нет активных расписаний</Text>
-              )}
-              <TouchableOpacity
-                style={s.manageBtn}
+              {/* c) Блокировать по расписанию */}
+              <SectionRow
+                emoji="📅" title="Блокировать по расписанию"
                 onPress={() => router.push('/(main)/schedule')}
-                activeOpacity={0.8}
               >
-                <Text style={s.manageBtnText}>Управлять →</Text>
-              </TouchableOpacity>
-            </Card>
-
-            {/* ⑥ Местоположение ребёнка */}
-            <SectionTitle emoji="📍" text={t('parent.child.location')} />
-            <Card>
-              {gps ? (
-                <View style={s.gpsContent}>
-                  <Text style={s.gpsCoord}>
-                    {gps.lat.toFixed(4)}, {gps.lng.toFixed(4)}
-                  </Text>
-                  <Text style={s.gpsTime}>{timeAgo(gps.created_at)}</Text>
-                  {gps.accuracy && <Text style={s.gpsAccuracy}>±{Math.round(gps.accuracy)}м</Text>}
-                </View>
-              ) : (
-                <Text style={s.emptyHint}>{t('parent.child.locationUnknown')}</Text>
-              )}
-              <TouchableOpacity
-                style={s.manageBtn}
-                onPress={() => router.push('/(main)/map')}
-                activeOpacity={0.8}
-              >
-                <Text style={s.manageBtnText}>На карте →</Text>
-              </TouchableOpacity>
-            </Card>
-
-            {/* ⑦ Недельный график */}
-            <SectionTitle emoji="📊" text="Экранное время за неделю" />
-            <Card>
-              <View style={s.chart}>
-                {daySums.map(({ date, total }) => {
-                  const pct = total > 0 ? Math.max(6, (total / maxMins) * 100) : 3;
-                  const isToday = date === days[days.length - 1];
-                  return (
-                    <View key={date} style={s.barCol}>
-                      <Text style={s.barVal}>{total > 0 ? minsToHM(total) : '—'}</Text>
-                      <View style={s.barTrack}>
-                        <View
-                          style={[
-                            s.bar,
-                            { height: `${pct}%` as any },
-                            isToday ? s.barToday : total > 0 ? s.barFilled : s.barEmpty,
-                          ]}
-                        />
-                      </View>
-                      <Text style={[s.barDay, isToday && s.barDayToday]}>
-                        {DAY_LABELS[new Date(date).getDay()]}
+                {activeSchedules.length > 0 ? (
+                  activeSchedules.map((sc) => (
+                    <View key={sc.id} style={s.schedRow}>
+                      <Text style={s.schedIcon}>
+                        {sc.type === 'sleep' ? '🌙' : sc.type === 'school' ? '🏫' : '⏰'}
                       </Text>
+                      <Text style={s.schedLabel}>{sc.label ?? sc.type}</Text>
+                      <Text style={s.schedTime}>{sc.start_time}—{sc.end_time}</Text>
                     </View>
-                  );
-                })}
-              </View>
-              <TouchableOpacity
-                style={s.manageBtn}
-                onPress={() => router.push('/(main)/history')}
-                activeOpacity={0.8}
+                  ))
+                ) : (
+                  <Text style={s.sectionHint}>Нет активных расписаний</Text>
+                )}
+              </SectionRow>
+
+              <View style={s.gap} />
+
+              {/* d) Местоположение */}
+              <SectionRow
+                emoji="📍" title={t('parent.child.location')}
+                onPress={() => router.push('/(main)/map')}
               >
-                <Text style={s.manageBtnText}>Подробнее →</Text>
-              </TouchableOpacity>
-            </Card>
+                <View style={s.mapPlaceholder}>
+                  <Text style={s.mapIcon}>📍</Text>
+                  {gps && <Text style={s.mapCoord}>{gps.lat.toFixed(4)}, {gps.lng.toFixed(4)}</Text>}
+                </View>
+              </SectionRow>
+
+              <View style={s.gap} />
+
+              {/* e) Недельный график */}
+              <SectionRow emoji="📊" title="Экранное время за неделю"
+                onPress={() => router.push('/(main)/history')}
+              >
+                <View style={s.chart}>
+                  {daySums.map(({ date, total }) => {
+                    const pct = total > 0 ? Math.max(6, (total / maxMins) * 100) : 3;
+                    const isToday = date === days[days.length - 1];
+                    return (
+                      <View key={date} style={s.barCol}>
+                        <Text style={s.barVal}>{total > 0 ? minsToHM(total) : '—'}</Text>
+                        <View style={s.barTrack}>
+                          <View style={[s.bar, { height: `${pct}%` as any }, isToday ? s.barToday : total > 0 ? s.barFilled : s.barEmpty]} />
+                        </View>
+                        <Text style={[s.barDay, isToday && s.barDayToday]}>{DAY_LABELS[new Date(date).getDay()]}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </SectionRow>
+            </View>
           </>
         ) : (
-          /* No children connected */
           <View style={s.emptyWrap}>
             <Image source={require('../../assets/giraffe_welcome.png')} style={s.emptyImg} resizeMode="contain" />
             <Text style={s.emptyText}>{t('parent.home.noChildrenDesc')}</Text>
             {family && (
               <>
-                <Text style={s.emptyHintCode}>{t('settings.inviteCode')}:</Text>
-                <Text style={s.inviteCode}>{family.invite_code}</Text>
+                <Text style={s.emptyHint}>{t('settings.inviteCode')}:</Text>
+                <Text style={s.emptyCode}>{family.invite_code}</Text>
               </>
             )}
           </View>
         )}
-
-        <View style={{ height: 32 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -510,81 +504,138 @@ export default function DashboardScreen() {
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#EEF1F5' },
-  headerBg: { backgroundColor: '#1B7A45', paddingTop: 56, paddingBottom: 20 },
-  headerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: '#2DB573', opacity: 0.45 },
-  headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 24, marginBottom: 12 },
-  appTitle: { fontSize: 28, fontWeight: '800', color: 'white' },
-  familyName: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
-  streakBadge: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
-  streakText: { fontSize: 13, fontWeight: '700', color: 'white' },
-  childRow: { paddingHorizontal: 24, gap: 8, paddingBottom: 4 },
-  childTab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)' },
-  childTabActive: { backgroundColor: 'white' },
-  childTabText: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
-  childTabTextActive: { color: '#1B7A45' },
-  body: { flex: 1, backgroundColor: '#EEF1F5', borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -12 },
-  bodyContent: { paddingTop: 20, paddingBottom: 100 },
-  card: { backgroundColor: 'white', borderRadius: 16, marginHorizontal: 20, marginBottom: 16, padding: 16, borderWidth: 1, borderColor: '#E5E7EB' },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#374151', marginHorizontal: 20, marginBottom: 8, marginTop: 4 },
-  limitCard: { borderColor: '#C8E8D5', borderWidth: 1.5 },
-  limitTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  limitChildInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  limitAvatar: { fontSize: 36 },
-  limitChildName: { fontSize: 17, fontWeight: '800', color: '#0D1B12' },
-  limitChildAge: { fontSize: 12, color: '#6B7B6E', marginTop: 1 },
-  blockToggle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  blockIcon: { fontSize: 18 },
-  blockedBanner: { alignItems: 'center', paddingVertical: 16 },
-  blockedTitle: { fontSize: 18, fontWeight: '800', color: '#EF4444', marginBottom: 4 },
-  blockedDesc: { fontSize: 13, color: '#6B7280' },
-  remainingLabel: { fontSize: 12, color: '#6B7B6E', textAlign: 'center', marginBottom: 4 },
-  remainingValue: { fontSize: 42, fontWeight: '900', color: '#0FA968', textAlign: 'center', marginBottom: 12, letterSpacing: -1 },
-  progressTrack: { height: 6, backgroundColor: '#F0F0F0', borderRadius: 3, overflow: 'hidden', marginBottom: 6 },
-  progressFill: { height: '100%', backgroundColor: '#0FA968', borderRadius: 3 },
-  progressSub: { fontSize: 11, color: '#9CA3AF', textAlign: 'center', marginBottom: 14 },
-  addRow: { flexDirection: 'row', gap: 10 },
-  addBtn: { flex: 1, backgroundColor: '#E6F9F0', borderRadius: 12, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: '#0FA968' },
-  addBtnText: { fontSize: 15, fontWeight: '800', color: '#0FA968' },
-  taskCard: { flexDirection: 'row', alignItems: 'center' },
-  taskInfo: { flex: 1, marginRight: 12 },
-  taskTitle: { fontSize: 15, fontWeight: '600', color: '#0D1B12', marginBottom: 2 },
-  taskReward: { fontSize: 13, color: '#0FA968', fontWeight: '700' },
-  approveBtn: { backgroundColor: '#0FA968', borderRadius: 10, width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  approveBtnText: { color: 'white', fontWeight: '800', fontSize: 18 },
-  appsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  appChip: { backgroundColor: '#E6F9F0', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
+  root: { flex: 1, backgroundColor: '#EEF1F5' },
+
+  // Header
+  header: { backgroundColor: '#1B7A45', paddingTop: 52, paddingBottom: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, overflow: 'hidden' },
+  headerGradTop: { ...StyleSheet.absoluteFillObject, backgroundColor: '#2DB573', opacity: 0.45 },
+  headerInner: { paddingHorizontal: 20 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  mascot: { width: 56, height: 56, borderRadius: 28 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  headerName: { fontSize: 22, fontWeight: '800', color: 'white' },
+  headerChevron: { fontSize: 22, color: 'rgba(255,255,255,0.6)', fontWeight: '300' },
+  statusRow: { flexDirection: 'row', gap: 10, marginTop: 2 },
+  statusText: { fontSize: 12, color: 'rgba(255,255,255,0.7)' },
+  headerRight: { alignItems: 'flex-end', gap: 6 },
+  updatedText: { fontSize: 11, color: 'rgba(255,255,255,0.65)', textAlign: 'right', lineHeight: 15 },
+  refreshBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+  refreshIcon: { fontSize: 18, color: 'white', fontWeight: '700' },
+
+  // Avatar selector
+  avatarRow: { gap: 10, paddingTop: 16 },
+  avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
+  avatarCircleActive: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.3)' },
+  avatarEmoji: { fontSize: 22 },
+
+  // Scroll
+  scroll: { flex: 1 },
+  scrollContent: { paddingTop: 16, paddingBottom: 100 },
+
+  // Main card
+  mainCard: { backgroundColor: 'white', borderRadius: 18, marginHorizontal: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
+  mainCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  mainCardTitle: { fontSize: 17, fontWeight: '800', color: '#1A1A1A' },
+  mainCardChevron: { fontSize: 22, color: '#C0C0C0', fontWeight: '300' },
+  mainCardDesc: { fontSize: 13, color: '#8E8E93', marginBottom: 12 },
+  greenBadge: { backgroundColor: '#2DB573', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 },
+  greenBadgeText: { fontSize: 12, fontWeight: '700', color: 'white' },
+
+  // Limited app rows
+  limitedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  limitedIcon: { fontSize: 16 },
+  limitedName: { fontSize: 14, color: '#3C3C43', flex: 1 },
+
+  // Timer
+  timerBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FAF5', borderRadius: 14, padding: 14, marginTop: 12, gap: 10 },
+  timerDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#2DB573', justifyContent: 'center', alignItems: 'center' },
+  timerDotText: { fontSize: 14, color: 'white' },
+  timerValue: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
+  timerEdit: { fontSize: 13, fontWeight: '600', color: '#2DB573' },
+
+  // Schedule note
+  schedNote: { fontSize: 12, color: '#8E8E93', marginTop: 10 },
+
+  // Block button
+  blockBtn: { marginTop: 14, borderWidth: 1.5, borderColor: '#E0E0E0', borderRadius: 12, paddingVertical: 12, alignItems: 'center', backgroundColor: 'white' },
+  blockBtnActive: { borderColor: '#2DB573', backgroundColor: '#F0FAF5' },
+  blockBtnText: { fontSize: 15, fontWeight: '700', color: '#3C3C43' },
+  blockBtnTextActive: { color: '#2DB573' },
+
+  // Bottom sheet visual
+  sheet: { backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: 8, paddingHorizontal: 16, paddingBottom: 16 },
+  handle: { width: 40, height: 4, backgroundColor: '#DDD', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 16 },
+
+  // Tasks banner
+  tasksBanner: { marginBottom: 16 },
+  tasksBannerTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 },
+  taskRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F8F8', borderRadius: 12, padding: 12, marginBottom: 6 },
+  taskName: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 2 },
+  taskReward: { fontSize: 12, color: '#2DB573', fontWeight: '700' },
+  taskApprove: { backgroundColor: '#2DB573', borderRadius: 10, width: 36, height: 36, justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
+  taskApproveText: { color: 'white', fontWeight: '800', fontSize: 16 },
+
+  // Banner
+  banner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F8F8', borderRadius: 16, padding: 14, gap: 12, marginBottom: 8 },
+  bannerImg: { width: 56, height: 56, borderRadius: 14 },
+  bannerInfo: { flex: 1 },
+  bannerTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A', lineHeight: 19 },
+  bannerSub: { fontSize: 12, color: '#8E8E93', marginTop: 2 },
+  bannerChevron: { fontSize: 22, color: '#C0C0C0', fontWeight: '300' },
+
+  // Gap
+  gap: { height: 8, backgroundColor: '#EEF1F5', marginHorizontal: -16 },
+
+  // Section rows
+  section: { paddingVertical: 14 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  sectionEmoji: { fontSize: 18 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A' },
+  sectionBadge: { backgroundColor: '#EEF1F5', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 },
+  sectionBadgeText: { fontSize: 12, fontWeight: '600', color: '#6B7B6E' },
+  sectionChevron: { fontSize: 22, color: '#C0C0C0', fontWeight: '300' },
+  sectionHint: { fontSize: 13, color: '#8E8E93' },
+
+  // App chips
+  appChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  appChip: { backgroundColor: '#F0FAF5', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   appChipText: { fontSize: 12, fontWeight: '600', color: '#065F46' },
-  appChipBlocked: { backgroundColor: '#FEF2F2' },
-  appChipTextBlocked: { color: '#991B1B' },
-  appsMore: { fontSize: 12, color: '#6B7280', alignSelf: 'center' },
-  manageBtn: { borderTopWidth: 1, borderTopColor: '#F0F0F0', marginTop: 4, paddingTop: 12, alignItems: 'flex-end' },
-  manageBtnText: { fontSize: 13, fontWeight: '700', color: '#0FA968' },
-  schedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  schedIcon: { fontSize: 20, width: 28, textAlign: 'center' },
-  schedInfo: { flex: 1 },
-  schedLabel: { fontSize: 14, fontWeight: '600', color: '#0D1B12' },
-  schedTime: { fontSize: 12, color: '#6B7B6E' },
-  schedBadge: { backgroundColor: '#E6F9F0', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  schedBadgeText: { fontSize: 11, fontWeight: '600', color: '#059669' },
-  gpsContent: { marginBottom: 4 },
-  gpsCoord: { fontSize: 15, fontWeight: '700', color: '#0D1B12', marginBottom: 2 },
-  gpsTime: { fontSize: 12, color: '#6B7B6E' },
-  gpsAccuracy: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
-  chart: { flexDirection: 'row', alignItems: 'flex-end', height: 110, gap: 6, marginBottom: 8 },
+  appChipRed: { backgroundColor: '#FEF2F2' },
+  appChipTextRed: { color: '#991B1B' },
+  appMore: { fontSize: 12, color: '#8E8E93', alignSelf: 'center' },
+
+  // Dashed button
+  dashedBtn: { marginTop: 10, borderWidth: 1.5, borderColor: '#D1D5DB', borderStyle: 'dashed', borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  dashedBtnText: { fontSize: 13, fontWeight: '600', color: '#6B7B6E' },
+
+  // Schedule rows
+  schedRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  schedIcon: { fontSize: 16 },
+  schedLabel: { fontSize: 14, fontWeight: '600', color: '#1A1A1A' },
+  schedTime: { fontSize: 13, color: '#8E8E93' },
+
+  // Map placeholder
+  mapPlaceholder: { height: 90, backgroundColor: '#E4F3EA', borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  mapIcon: { fontSize: 28 },
+  mapCoord: { fontSize: 11, color: '#6B7B6E', marginTop: 4 },
+
+  // Chart
+  chart: { flexDirection: 'row', alignItems: 'flex-end', height: 110, gap: 6, marginTop: 4 },
   barCol: { flex: 1, alignItems: 'center', height: '100%' },
   barVal: { fontSize: 9, color: '#9CA3AF', marginBottom: 4, textAlign: 'center' },
   barTrack: { flex: 1, width: '100%', justifyContent: 'flex-end', borderRadius: 4, overflow: 'hidden' },
   bar: { width: '100%', borderRadius: 4 },
   barEmpty: { backgroundColor: '#F0F0F0' },
   barFilled: { backgroundColor: '#C8E8D5' },
-  barToday: { backgroundColor: '#0FA968' },
+  barToday: { backgroundColor: '#2DB573' },
   barDay: { fontSize: 11, color: '#6B7B6E', marginTop: 4 },
-  barDayToday: { color: '#0FA968', fontWeight: '700' },
+  barDayToday: { color: '#2DB573', fontWeight: '700' },
+
+  // Empty state
   emptyWrap: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 24 },
   emptyImg: { width: 140, height: 140, marginBottom: 16 },
   emptyText: { fontSize: 16, color: '#6B7B6E', textAlign: 'center', marginBottom: 16 },
-  emptyHint: { fontSize: 13, color: '#9CA3AF', marginBottom: 8 },
-  emptyHintCode: { fontSize: 13, color: '#6B7B6E', marginBottom: 6 },
-  inviteCode: { color: '#0FA968', fontSize: 32, fontWeight: '800', letterSpacing: 5 },
+  emptyHint: { fontSize: 13, color: '#6B7B6E', marginBottom: 6 },
+  emptyCode: { color: '#2DB573', fontSize: 32, fontWeight: '800', letterSpacing: 5 },
 });
