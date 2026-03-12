@@ -52,7 +52,7 @@ export default function MainLayout() {
         name="history"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📊" label="История" focused={focused} />
+            <TabIcon emoji="📊" label="Статистика" focused={focused} />
           ),
         }}
       />
@@ -60,7 +60,7 @@ export default function MainLayout() {
         name="more"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="⚙️" label="Профиль" focused={focused} />
+            <TabIcon emoji="⚙️" label="Ещё" focused={focused} />
           ),
         }}
       />

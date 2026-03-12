@@ -23,7 +23,7 @@ interface DayStat {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨'];
+const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; color: string }> = {
   games:         { emoji: '🎮', label: 'Игры',         color: '#7C3AED' },
@@ -228,7 +228,7 @@ export default function HistoryScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={[s.childTabText, selectedChild?.id === child.id && s.childTabTextActive]}>
-                  {AVATARS[(child.avatar_index ?? 1) - 1]} {child.name}
+                  {AVATARS[child.avatar_index ?? 0]} {child.name}
                 </Text>
               </TouchableOpacity>
             ))}

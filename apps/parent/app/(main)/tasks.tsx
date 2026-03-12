@@ -29,7 +29,7 @@ const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }>
 
 const REWARD_PRESETS = [10, 15, 30, 60];
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨'];
+const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
 
 export default function TasksScreen() {
   const [tasks, setTasks] = useState<ExtTask[]>([]);
@@ -233,7 +233,7 @@ export default function TasksScreen() {
                 <Text style={s.taskReward}>⏱ +{item.reward_minutes} {t('common.minutes')}</Text>
                 {childName && (
                   <Text style={s.taskChild}>
-                    {AVATARS[(children.find(c => c.id === item.child_id)?.avatar_index ?? 1) - 1]} {childName}
+                    {AVATARS[children.find(c => c.id === item.child_id)?.avatar_index ?? 0]} {childName}
                   </Text>
                 )}
               </View>
@@ -318,7 +318,7 @@ export default function TasksScreen() {
                       activeOpacity={0.8}
                     >
                       <Text style={[s.childBtnText, selectedChildId === child.id && s.childBtnTextActive]}>
-                        {AVATARS[(child.avatar_index ?? 1) - 1]} {child.name}
+                        {AVATARS[child.avatar_index ?? 0]} {child.name}
                       </Text>
                     </TouchableOpacity>
                   ))}

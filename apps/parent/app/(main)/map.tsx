@@ -19,7 +19,7 @@ interface GpsPoint {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨'];
+const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
 const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 const REFRESH_INTERVAL_MS = 60_000;         // 1 minute
 
@@ -255,7 +255,7 @@ export default function MapScreen() {
 
   const latest   = points[0] ?? null;
   const online   = latest ? isOnline(latest.recorded_at) : false;
-  const avatar   = AVATARS[(selectedChild?.avatar_index ?? 1) - 1];
+  const avatar   = AVATARS[selectedChild?.avatar_index ?? 0];
   const grouped  = groupByDate(points);
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -288,7 +288,7 @@ export default function MapScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={[s.childTabText, selectedChild?.id === child.id && s.childTabTextActive]}>
-                  {AVATARS[(child.avatar_index ?? 1) - 1]} {child.name}
+                  {AVATARS[child.avatar_index ?? 0]} {child.name}
                 </Text>
               </TouchableOpacity>
             ))}

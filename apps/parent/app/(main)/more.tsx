@@ -9,7 +9,7 @@ import { supabase } from '@kakai/api';
 import { t, setLocale } from '@kakai/i18n';
 import type { User } from '@kakai/shared';
 
-type Lang = 'ru' | 'kz';
+type Lang = 'ru' | 'kz' | 'en';
 
 interface FamilyRow {
   id: string;
@@ -23,7 +23,7 @@ interface SubRow {
   auto_renew: boolean;
 }
 
-const AVATARS = ['🦊', '🐻', '🐼', '🐨'];
+const AVATARS = ['🦒', '🐻', '🐼', '🐨'];
 
 function SectionLabel({ text }: { text: string }) {
   return <Text style={s.sectionLabel}>{text}</Text>;
@@ -175,7 +175,7 @@ export default function MoreScreen() {
     return sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1);
   }
 
-  const avatarEmoji = AVATARS[(user?.avatar_index ?? 1) - 1];
+  const avatarEmoji = AVATARS[user?.avatar_index ?? 0];
   const isPremium = sub ? sub.plan !== 'free' && (!sub.expires_at || new Date(sub.expires_at) > new Date()) : false;
 
   return (
@@ -250,6 +250,15 @@ export default function MoreScreen() {
                 >
                   <Text style={[s.langBtnText, lang === 'kz' && s.langBtnTextActive]}>
                     {t('settings.kz')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[s.langBtn, lang === 'en' && s.langBtnActive]}
+                  onPress={() => handleLangToggle('en')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[s.langBtnText, lang === 'en' && s.langBtnTextActive]}>
+                    EN
                   </Text>
                 </TouchableOpacity>
               </View>
