@@ -290,3 +290,12 @@ Path: `apps/child/modules/kakai-blocker/android/src/main/java/kz/kakai/blocker/`
 - 2026-03-15: users.name column already existed before 007.
 - 2026-03-15: balance_minutes = (limit+balance)-used, reset daily.
 - 2026-03-15: Design changes require Senna approval. Never change UI without explicit consent.
+- 2026-03-15: Block 02 approach A — keep monolith index.tsx, reorder slides only. Split into files in Block 03.
+
+## Block Status
+- Block 01 (DB Migration 007): ✅ DONE
+- Block 02 (Auth + Role Selection): ⏳ NEXT — approach A (keep monolith, reorder slides)
+- Block 03-10: ❌ Not started
+
+## Applied Migrations
+001, 002, 003, 004, 005, 006, 007 (architecture v2.2)
